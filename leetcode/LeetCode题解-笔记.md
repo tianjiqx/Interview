@@ -285,6 +285,34 @@ public int maxProfit(int[] prices) {
     }
     return maxProfit;
 }
+
+/**
+leetcode 初级算法，打家劫舍
+你是一个专业的小偷，计划偷窃沿街的房屋。每间房内都藏有一定的现金，影响你偷窃的唯一制约因素就是相邻的房屋装有相互连通的防盗系统，如果两间相邻的房屋在同一晚上被小偷闯入，系统会自动报警。
+
+给定一个代表每个房屋存放金额的非负整数数组，计算你 不触动警报装置的情况下 ，一夜之内能够偷窃到的最高金额。
+1 <= nums.length <= 100
+0 <= nums[i] <= 400
+分析：
+定义子问题，将时间固定，令DP[i]是前i个房间偷取最大金额，最终问题即DP[n-1]
+递推公式：DP[i]=max(nums[i]+ DP[i-2], DP[i-1])
+因为只和前2相关，空间优化，只用3个值即可。
+*/
+public int rob(int[] nums) {
+    int len = nums.length;
+    if (len < 2) {
+        return nums[0];
+    }
+    int dpi_2 = nums[0];
+    int dpi_1 = Math.max( nums[1], nums[0]);
+    int dp = dpi_1;
+    for (int i = 2 ; i < len; i ++) {
+        dp =  Math.max( nums[i] + dpi_2, dpi_1);
+        dpi_2 = dpi_1;
+        dpi_1 = dp;
+    }
+    return dp;
+}
 ```
 
 ### 2维动态规划（LCS问题）
@@ -1212,6 +1240,98 @@ public boolean isPalindrome(ListNode head) {
 
 
 ### 二叉树树
+
+```java
+/**
+给定一个二叉树，找出其最大深度。
+
+二叉树的深度为根节点到最远叶子节点的最长路径上的节点数。
+
+说明: 叶子节点是指没有子节点的节点。
+
+示例：
+给定二叉树 [3,9,20,null,null,15,7], 返回的最大深度是3.
+    3
+   / \
+  9  20
+    /  \
+   15   7
+https://leetcode-cn.com/leetbook/read/top-interview-questions-easy/xnd69e/
+*/
+
+// 1.递归
+int maxdepth(TreeNode root, int depth) {
+    if (root == null) {
+        return depth;
+    }
+    return Math.max(maxdepth(root.left, depth + 1), maxdepth(root.right, depth + 1));
+}
+
+public int maxDepth(TreeNode root) {
+    return maxdepth(root, 0);
+}
+// 精简写法
+public int maxDepth(TreeNode root) {
+    return root==null? 0 : Math.max(maxDepth(root.left), maxDepth(root.right))+1;
+}
+
+// 2. BFS
+// 根据运行时间来看，效率不高，可能原因在于申请队列，入队出队的时间消耗。
+// 遍历一遍，理论还是O(n)
+// 而基于递归的方法。在无栈溢出情况下，也是O(N)，但是操作精简，性能更好。
+public int maxDepth(TreeNode root) {
+    if (root == null)
+        return 0;
+    //创建一个队列
+    Deque<TreeNode> deque = new LinkedList<>();
+    // Queue<Integer> q = new LinkedList<Integer>();
+    deque.push(root);
+    int count = 0;
+    while (!deque.isEmpty()) {
+        //每一层的个数
+        int size = deque.size();
+        while (size-- > 0) {
+            TreeNode cur = deque.pop();
+            if (cur.left != null)
+                deque.addLast(cur.left);
+            if (cur.right != null)
+                deque.addLast(cur.right);
+        }
+        count++;
+    }
+    return count;
+}
+
+// 3.DFS
+public int maxDepth(TreeNode root) {
+    if (root == null)
+        return 0;
+    //stack记录的是节点，而level中的元素和stack中的元素
+    //是同时入栈同时出栈，并且level记录的是节点在第几层
+    Stack<TreeNode> stack = new Stack<>();
+    Stack<Integer> level = new Stack<>();
+    stack.push(root);
+    level.push(1);
+    int max = 0;
+    while (!stack.isEmpty()) {
+        //stack中的元素和level中的元素同时出栈
+        TreeNode node = stack.pop();
+        int temp = level.pop();
+        max = Math.max(temp, max);
+        if (node.left != null) {
+            //同时入栈
+            stack.push(node.left);
+            level.push(temp + 1);
+        }
+        if (node.right != null) {
+            //同时入栈
+            stack.push(node.right);
+            level.push(temp + 1);
+        }
+    }
+    return max;
+}
+```
 
 
 
