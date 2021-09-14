@@ -6,7 +6,7 @@
 
 优点：
 
-- 动态加载类
+- 动态加载类，可被用于完成代理
 
 缺点：
 
@@ -18,9 +18,20 @@
 
 其他参考：笔记[UML与设计模式-笔记.md](https://github.com/tianjiqx/notes/blob/master/software_project/UML/UML%E4%B8%8E%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AC%94%E8%AE%B0.md) 介绍了远程代理
 
+
+
+代理：
+
+- 控制和管理访问
+  - 远程对象，智能引用，多线程访问的同步代理，隐藏复杂功能，写时复制等
+  - 保护代理，保护对象特定属性
+    - 不同的调用处理器InvocationHandler，所能做事情不同
+
+
+
 ### REF
 
-- [java反射机制](https://mp.weixin.qq.com/s?__biz=MzI1NDU0MTE1NA==&mid=2247483785&idx=1&sn=f696c8c49cb7ecce9818247683482a1c&chksm=e9c2ed84deb564925172b2dd78d307d4dc345fa313d3e44f01e84fa22ac5561b37aec5cbd5b4&scene=0#rd)  java核心技术卷1 5.7 
+- [java反射机制](https://mp.weixin.qq.com/s?__biz=MzI1NDU0MTE1NA==&mid=2247483785&idx=1&sn=f696c8c49cb7ecce9818247683482a1c&chksm=e9c2ed84deb564925172b2dd78d307d4dc345fa313d3e44f01e84fa22ac5561b37aec5cbd5b4&scene=0#rd)  java核心技术卷1 5.7    代理 6.5 
 - hadoop 技术内幕common，mapreduce，yarn
 - hadoop 权威指南4版
 
@@ -63,7 +74,7 @@ ScheduledThreadPoolExecutor是一个实现类，可以在给定的延迟后运�
 */
 ```
 
-在hadoop的源码中的使用线程池，发现也是继承ThreadPoolExecutor的HadoopThreadPoolExecutor（org.apache.hadoop.util.concurrent包目录下），增加日志。
+在hadoop的源码中的使用线程池，发现也是继承ThreadPoolExecutor的HadoopThreadPoolExecutor（org.apache.hadoop.util.concurrent包目录下），只是增加日志。
 
 
 
@@ -176,6 +187,43 @@ Thread.currentThread().setContextClassLoader(classLoader)可修改线程的Class
 
 
 
+tips:
+
+- 加载一个类时，其内部类不会同时被加载。
+  - 一个类被加载，当且仅当其某个静态成员（静态域、构造器、静态方法等）被调用时发生。 for 单例模式实现
+  - 被动引用
+    - 通过子类引用父类静态字段，不会导致**子类**初始化
+      - 父类会
+    - 通过数组定义引用类，不会触发此类的初始化
+      - `SuperClass[] supArr= new SuperClass[10];`
+    - 引用常量时，常量在编译阶段会存入类的常量池中，本质上并没有直接引用到定义常量的类，因此也不会触发类的初始化。
+
+- 触发类的初始化（主动引用）
+  - 使用 new 关键字实例化对象的时候，读取或设置一个类的静态字段（该字段不被 final 修饰）的时候，以及调用一个类的静态方法的时候；
+  - 使用 java.lang.reflect 包的方法对类进行反射调用
+  - 初始化类时，父类未初始化，需要先初始化父类
+  - jvm启动，的main类
+  - 一个 java.lang.invoke.MethodHandle 实例最后的解析结果为 REFgetStatic、REFputStatic、REF_invokeStatic 的方法句柄,并且这个方法句柄所对应的类没有进行过初始化（未理解）
+- 类加载的执行顺序优先级：静态块>main()>构造块>构造方法
+  - 静态代码块：用staitc声明，jvm加载类时执行，仅执行一次
+  - 构造代码块：类中直接用{}定义，每一次创建对象时执行。
+  - 静态块>main()是指一个类包含main()方法，同时有静态块，类被加载时会先执行静态块，之后才会执行main方法。
+
+
+
+### REF
+
+- 深入理解Java虚拟机JVM高级特性与最佳实践 第2版-周志明
+- [ava 虚拟机 3 ： Java的类加载机制](https://crazyfzw.github.io/2018/07/12/classloader/)
+- JVM和ClassLoader
+  https://www.cnblogs.com/Ming8006/p/11818218.html
+- Spark对HiveMetastore客户端的多版本管理、兼容性探究以及栅
+  栏实现 https://blog.csdn.net/zhanyuanlin/article/details
+  /95898018 
+- [slides: classloader](https://github.com/tianjiqx/slides/blob/master/Java%20ClassLoader.pdf)
+
+
+
 ## 6. Java性能诊断技巧
 
 jstack:线程分析，找项目相关类方法
@@ -190,16 +238,255 @@ GC日志打印，停顿时间
 
 
 
+## 7. JVM 参数
+
+例子：-vmargs -Xms128M -Xmx512M -XX:PermSize=64M -XX:MaxPermSize=128M
+
+-vmargs 声明后面是VM的参数
+
+- 堆内存
+  - -Xms 128m JVM初始分配的堆内存
+  - **-Xmx** 512m JVM最大允许分配的堆内存，按需分配
+
+- 新生代内存(Young Ceneration, YC) 
+  - 默认1310MB,最大无显著
+  - -XX:NewSize= \<young size>[unit] 
+  - -XX:MaxNewSize= \<young size>[unit]
+  - -Xmn \<young size>[unit] 
+    - NewSize与MaxNewSize 设置为一致
+- 永久代/元空间
+  - -XX:PermSize=64M JVM初始分配的非堆内存（方法区），在jdk1.8 无效参数
+    - 方法区 (永久代) 初始大小
+    - 存储类的信息、常量池、方法数据、方法代码等
+    - 所有线程共享
+  - -XX:MaxPermSize=128M JVM最大允许分配的非堆内存，按需分配
+    - 方法区 (永久代) 最大大小,超过这个值将会抛出 OutOfMemoryError 异常:java.lang.OutOfMemoryError: PermGen
+      - “PermGen space“ HotSpot的实现
+  - JDK 1.8 方法移除永久代，使用元空间（本地内存）
+    - 元空间，JVM方法区的新实现
+      - 元空间的大小仅受本地内存限制
+        - 风险：没有指定 Metaspace 的大小时，消耗系统所有内存
+      - 异常信息：:java.lang.OutOfMemoryError: Metaspace
+      - 替代原因：
+        - 字符串存在永久代中，容易出现性能问题和内存溢出
+        - 类及方法的信息等比较难确定其大小，因此对于永久代的大小指定比较困难
+    - -XX:MetaspaceSize=N
+    - -XX:MaxMetaspaceSize=N
+
+
+
+**GC**
+
+- 指定垃圾回收器  （TODO）
+  - -XX:+UseSerialGC  串行垃圾回收器
+    - Serial + Serial Old 
+  - -XX:+USeParNewGC 并发串行垃圾收集器， 多线程并发，减少回收时间
+    - ParNew + Serial Old 
+  - -XX:+UseParallelGC 并行收集器，多CPU物理并行，最大化的提高程序吞吐量，同时缩短程序停顿时间
+    - ParallelScavenge  + Serial Old
+  - -XX:+UseConcMarkSweepGC   CMS 回收器，基于“标记-清除”算法，以获取最短回收停顿时间为目标
+    - ParNew + CMS + Serial Old，作为并发失败后备 Serial Old
+  - -XX:+UseG1GC  G1垃圾收集器，多线程执行，既用于新生代收集，也用于老生代收集
+- 指定GC日志
+  - -XX:+UseGCLogFileRotation
+  - 
+
+活跃数据：Full GC后，堆中老年代占用空间的大小
+
+各区分配：`总堆=3~4 * 活跃数据 = 1~1.15 （新）+ 2~3 （老） + 1.2~1.5 * 活跃数据 (永久) `
+
+
+
+GC调优经验： Full GC 的成本远高于 Minor GC，尽量将新对象预留在新生代，大对象/长期存活的对象进老年代
+
 
 
 ### REF
 
-- 深入理解Java虚拟机JVM高级特性与最佳实践 第2版-周志明
-- Java 虚拟机 3 ： Java的类加载机制
-  https://crazyfzw.github.io/2018/07/05/classloader/
--  JVM和ClassLoader
-  https://www.cnblogs.com/Ming8006/p/11818218.html
-- Spark对HiveMetastore客户端的多版本管理、兼容性探究以及栅
-  栏实现 https://blog.csdn.net/zhanyuanlin/article/details
-  /95898018  
+- [最重要的JVM参数指南](https://github.com/Snailclimb/JavaGuide/blob/master/docs/java/jvm/%E6%9C%80%E9%87%8D%E8%A6%81%E7%9A%84JVM%E5%8F%82%E6%95%B0%E6%8C%87%E5%8D%97.md)
+- [Java8内存模型—永久代(PermGen)和元空间(Metaspace)](https://www.cnblogs.com/paddix/p/5309550.html)
+
+
+
+## 8. ThreadLocal
+
+目的：
+
+多线程执行的代码，访问的数据，每个单线程独立使用，提供线程本地实例对象，线程局部变量。
+
+### 8.1 使用场景：
+
+- 消息队列，消费者处理持续处理自身负责的消息
+- 线程内上线文管理器、数据库连接，RPC通信 客户端
+- 每个线程维护一个用户session，持续处理用户请求
+- 一个线程，需要传递的对象（上下文（Context）），横跨若干方法进行处理，适合通过ThreadLocal完成在一个线程中传递同一个对象
+  - 一般定义为私有静态字段
+
+
+
+### 8.2 使用范例
+
+```java
+ import java.util.concurrent.atomic.AtomicInteger;
+ // 线程ID生成、获取器
+ public class ThreadId {
+     // Atomic integer containing the next thread ID to be assigned
+     private static final AtomicInteger nextId = new AtomicInteger(0);
+
+     // Thread local variable containing each thread's ID
+     private static final ThreadLocal<Integer> threadId =
+         new ThreadLocal<Integer>() {
+         	// 定义创建线程局部变量的方法
+             @Override protected Integer initialValue() {
+                 return nextId.getAndIncrement();
+         }
+     };
+     /*
+     另一种初始化方法：
+     private static ThreadLocal<Integer> mLocal = 
+     	ThreadLocal.withInitial(() -> nextId.getAndIncrement());
+     */
+
+     // Returns the current thread's unique ID, assigning it if necessary
+     public static int get() {
+         // 通过get()方法获取线程自己的对象，不存在创建。
+         return threadId.get();
+         // 其他公有的方法： 
+         // set(T value)  设置线程副本的执行
+         // remove() 删除线程局部变量的当前线程值，再次get时，通过initialValue()方法重新初始化
+         // 静态方法withInitial(Supplier<? extends S> supplier) 创建线程局部变量
+      }
+ }
+```
+
+### 8.3基本原理
+
+为了达到ThreadLocal的作用，一种可能的实现是，ThreadLocal 变量 自己维护一个ConcurrentHashMap\<thread， value> ，但是该方法的缺点是：
+
+- 需要加锁访问ConcurrentHashMap\<thread， value>，保证线程安全
+- 线程结束，需要释放资源，避免内存泄漏
+
+（BAR项目 master对于client连接，也是通过该方式完成，注册加入，长时间无请求时的释放，注册不频繁，性能影响不大）
+
+
+
+解决ThreadLocal变量 访问冲突的方式是，每个线程维护ThreadLocal 变量与值的映射ThreadLocalMap< ThreadLocal, value>，但是需要注意对ThreadLocal 变量引用的回收，避免内存泄漏。
+
+
+
+JDK的实际的实现：
+
+```java
+public class ThreadLocal<T> {
+
+    private final int threadLocalHashCode = nextHashCode();
+    private static AtomicInteger nextHashCode =
+        new AtomicInteger();
+    private static final int HASH_INCREMENT = 0x61c88647;
+
+    private static int nextHashCode() {
+        return nextHashCode.getAndAdd(HASH_INCREMENT);
+    }
+    public T get() {
+        Thread t = Thread.currentThread();
+        // 从线程中获取ThreadLocalMap
+        ThreadLocalMap map = getMap(t);
+        if (map != null) {
+            ThreadLocalMap.Entry e = map.getEntry(this);
+            if (e != null) {
+                @SuppressWarnings("unchecked")
+                T result = (T)e.value;
+                return result;
+            }
+        }
+        return setInitialValue();
+    }
+    public void set(T value) {
+        Thread t = Thread.currentThread();
+        ThreadLocalMap map = getMap(t);
+        if (map != null)
+            map.set(this, value);
+        else
+            createMap(t, value);
+    }
+     public void remove() {
+         ThreadLocalMap m = getMap(Thread.currentThread());
+         if (m != null)
+             m.remove(this);
+     }
+	// 从线程中获取ThreadLocalMap
+    ThreadLocalMap getMap(Thread t) {
+        return t.threadLocals;
+    }
+    // 为线程创建ThreadLocalMap
+    void createMap(Thread t, T firstValue) {
+        // key: this 是ThreadLocal对象 value: firstValue 
+        t.threadLocals = new ThreadLocalMap(this, firstValue);
+    }
+	// 每个线程自己维护的map，ThreadLocal变量和该线程的值
+    static class ThreadLocalMap {
+		// 对ThreadLocal变量的弱引用，当没有强引用指向ThreadLocal变量时，它可被回收，避免内存泄漏
+        // 对值是强引用，值可能由于key为null，无法移除entry，导致泄漏
+        // 解决办法是:set方法中通过replaceStaleEntry清除所有null的key
+        // rehash中，expungeStaleEntry清除所有null的key
+        static class Entry extends WeakReference<ThreadLocal<?>> {
+            /** The value associated with this ThreadLocal. */
+            Object value;
+
+            Entry(ThreadLocal<?> k, Object v) {
+                super(k);
+                value = v;
+            }
+        }
+
+        private static final int INITIAL_CAPACITY = 16;
+        private Entry[] table;
+        private int size = 0;
+        // resize
+        private int threshold; // Default to 0
+
+        ThreadLocalMap(ThreadLocal<?> firstKey, Object firstValue) {
+            table = new Entry[INITIAL_CAPACITY];
+            int i = firstKey.threadLocalHashCode & (INITIAL_CAPACITY - 1);
+            table[i] = new Entry(firstKey, firstValue);
+            size = 1;
+            setThreshold(INITIAL_CAPACITY);
+        }
+        
+        private Entry getEntry(ThreadLocal<?> key) {
+            int i = key.threadLocalHashCode & (table.length - 1);
+            Entry e = table[i];
+            if (e != null && e.get() == key)
+                return e;
+            else
+                return getEntryAfterMiss(key, i, e);
+        }
+
+        private Entry getEntryAfterMiss(ThreadLocal<?> key, int i, Entry e) {
+            Entry[] tab = table;
+            int len = tab.length;
+
+            while (e != null) {
+                ThreadLocal<?> k = e.get();
+                if (k == key)
+                    return e;
+                if (k == null)
+                    expungeStaleEntry(i);
+                else
+                    i = nextIndex(i, len);
+                e = tab[i];
+            }
+            return null;
+        }
+    }    
+}
+```
+
+
+
+### REF
+
+- [jdk8 api: ThreadLocal<T>](https://docs.oracle.com/javase/8/docs/api/java/lang/ThreadLocal.html)
+- [深入浅出Java多线程-ThreadLocal](https://crazyfzw.github.io/2020/11/25/threadlocal/)
+- [使用ThreadLocal](https://www.liaoxuefeng.com/wiki/1252599548343744/1306581251653666)
 
