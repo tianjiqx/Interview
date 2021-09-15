@@ -176,11 +176,12 @@ JNI技术规范
                           RejectedExecutionHandler handler)
 corePoolSize- 要保留在池中的线程数，即使它们处于空闲状态，除非allowCoreThreadTimeOut已设置
 maximumPoolSize - 池中允许的最大线程数
+                - 当工作队列满时，提交新任务时，会尝试创建非core线程进行处理
 keepAliveTime - 当线程数大于核心数时，这是多余空闲线程在终止前等待新任务的最长时间。
 unit-keepAliveTime参数的时间单位
 workQueue- 用于在执行任务之前保存任务的队列。这个队列将只保存方法Runnable 提交的任务execute。
 threadFactory - 执行器创建新线程时使用的工厂
-handler - 由于达到线程边界和队列容量而阻塞执行时使用的处理程序
+handler - 由于达到线程边界和队列容量而阻塞执行时使用的处理程序，饱和策略
 **/
 private ThreadPoolExecutor downloadThreadPool;
 // Init the thread pool to download file
@@ -188,6 +189,8 @@ downloadThreadPool = new ThreadPoolExecutor(impExpContext.exportThreadPoolSize,
                                             impExpContext.exportThreadPoolSize, 
                                             0L,
                                             TimeUnit.MICROSECONDS,
+                                            // 默认值是Integer.MAX_VALUE，
+                                            // 一般情况下不会饱和，但可能jvm OOM
                                             new LinkedBlockingQueue<Runnable>(impExpContext.exportThreadPoolQueueSize),
                                             Executors.defaultThreadFactory(), 
                                             new BlockWhenQueueFullHandler()
@@ -210,7 +213,7 @@ ScheduledThreadPoolExecutor是一个实现类，可以在给定的延迟后运�
 
 
 
-Java创建线程有三种方式：
+**Java创建线程有三种方式**
 
 - 实现Runable接口
   - 需要实现`void run()` 方法
@@ -227,6 +230,39 @@ Java创建线程有三种方式：
 
 
 
+**BlockingQueue 阻塞队列**
+
+- `LinkedBlockingQueue`
+  - 链式阻塞队列，底层数据结构是链表，默认大小是Integer.MAX_VALUE，可以指定大小
+- `ArrayBlockingQueue`
+  - 数组阻塞队列，底层数据结构是数组，需要指定队列的大小
+  - `new ArrayBlockingQueue<>(QUEUE_CAPACITY)`
+- `SynchronousQueue`
+  - 同步队列，内部容量为，不存储元素，每个put操作必须等待一个take操作
+- `DelayQueue`
+  - 延迟队列，想要获取的元素需要等待指定延迟时间后，才能从队列中获取到该元素
+
+**RejectedExecutionHandler 饱和策略**
+
+- ThreadPoolExecutor.AbortPolicy：默认拒绝处理策略，丢弃任务并抛出RejectedExecutionException异常。
+- ThreadPoolExecutor.DiscardPolicy：丢弃新来的任务，但是不抛出异常。
+- ThreadPoolExecutor.DiscardOldestPolicy：丢弃队列头部（最旧的）的任务，然后重新尝试执行程序（如果再次失败，重复此过程）。
+- ThreadPoolExecutor.CallerRunsPolicy：由调用线程处理该任务。（推荐）
+  - `new ThreadPoolExecutor.CallerRunsPolicy()`
+  - 由调用线程中执行被拒绝的任务，可能影响提交任务（执行`ThreadPool.execute()`的线程，主线程或者说提交线程）
+
+
+
+阿里 Java 开发手册的建议：
+
+- 不允许自己显示创建线程，而创建线程池
+  - 减少在创建和销毁线程上所花的时间以及系统资源的开销（内存，切换）
+- 也不允许Executors创建，而是通过ThreadPoolExecutor 的方式（手动设置任务队列容量，以及饱和策略）
+  - FixedThreadPool 和 SingleThreadPool，允许的请求队列长度为 Integer.MAX_VALUE ，可能OOM
+  - CachedThreadPool 和 ScheduledThreadPool，允许的创建线程数量为 Integer.MAX_VALUE，也可能导致OOM
+
+
+
 #### REF
 
 - [jdk1.8 ThreadPoolExecutor](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ThreadPoolExecutor.html)
@@ -234,6 +270,7 @@ Java创建线程有三种方式：
 - [java&android线程池-Executor框架之ThreadPoolExcutor&ScheduledThreadPoolExecutor浅析（多线程编程之三）](http://blog.csdn.net/javazejian/article/details/50890554)
 - [jdk1.8 java.lang.Runnable](https://docs.oracle.com/javase/8/docs/api/java/lang/Runnable.html)
 - [jdk1.8 java.util.concurrent.Callable](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Callable.html)
+- [深入浅出Java多线程-ThreadPoolExecutor](https://crazyfzw.github.io/2020/11/13/concurrent-thread-pool-executor/)  demo使用，原理  推荐
 
 
 
@@ -485,13 +522,32 @@ Buffer：缓冲区
 
 ### 4.1 Java性能诊断技巧
 
-jstack:线程分析，找项目相关类方法
+- jps：查看java进程，默认只
+  - `jps -v` 输出虚拟机进程启动时JVM参数
+  - `jps -l` 输出主类的全名,jar包路径
+  - `jps -m` 输出传递给主类main()函数的参数
+  - `jps -q` 只输出pid
+- jinfo：查看和调整虚拟机运行参数，环境变量，classpath等信息
+  - `jinfo <pid>`
 
-jmap：定期打印，查看异常变量，对象
+- jstack：线程分析，找项目相关类方法
+  - `jstack <pid>`
 
-jstat: 查看GC频率
+- jmap：定期打印jvm状态，查看异常变量，对象
+  - `jmap -histo:live <pid> |head 30`  显示堆中对象统计信息，包括类、实例数量、合计容量
+    - 有时，需要`sudo -u hive` 来指定用户
+  - `jmap -heap <pid>` 显示堆详细信息
+  - `jmap -dump <pid>`  生成Java堆转储快照
+    - -dump:[live, ]format=b,file=filename,其中live子参数说明是否只dump出存活的对象
 
-arthas: trace,watch命令，分析性能，变量，查找抛出异常的位置
+- jhat：分析jmap 打印的dump文件，可在浏览器中查看
+  - `jhat <dumpfile>`
+- jstat: 查看GC频率
+  - `jstat -gcutil <pid> [interval] [count]` 百分比显示，JVM堆使用情况
+
+- arthas: trace,watch命令，分析性能，变量，查找抛出异常的位置
+
+
 
 GC日志打印，停顿时间
 
@@ -546,9 +602,12 @@ GC日志打印，停顿时间
   - -XX:+UseConcMarkSweepGC   CMS 回收器，基于“标记-清除”算法，以获取最短回收停顿时间为目标
     - ParNew + CMS + Serial Old，作为并发失败后备 Serial Old
   - -XX:+UseG1GC  G1垃圾收集器，多线程执行，既用于新生代收集，也用于老生代收集
-- 指定GC日志
-  - -XX:+UseGCLogFileRotation
-  - 
+- 指定GC日志（TODO more）
+  - ```
+    -XX:+PrintGC  // 别名 -verbose:gc
+    -XX:+PrintGCDetails
+    -Xloggc:/path/to/gc.log
+    ```
 
 活跃数据：Full GC后，堆中老年代占用空间的大小
 
@@ -564,7 +623,9 @@ GC调优经验： Full GC 的成本远高于 Minor GC，尽量将新对象预留
 
 - [最重要的JVM参数指南](https://github.com/Snailclimb/JavaGuide/blob/master/docs/java/jvm/%E6%9C%80%E9%87%8D%E8%A6%81%E7%9A%84JVM%E5%8F%82%E6%95%B0%E6%8C%87%E5%8D%97.md)
 - [Java8内存模型—永久代(PermGen)和元空间(Metaspace)](https://www.cnblogs.com/paddix/p/5309550.html)
-
+- [java8添加并查看GC日志(ParNew+CMS)](https://segmentfault.com/a/1190000021453229)
+- [JVM GC 日志详解](https://juejin.cn/post/6844903791909666823)
+- [java9 gc log参数迁移](https://www.jianshu.com/p/a99dec3230c9)
 
 
 
