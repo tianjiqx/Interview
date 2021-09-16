@@ -909,6 +909,14 @@ public class Solution {
 
 ## 4.排序算法
 
+口诀：
+
+最快的排序：“快希**归**堆”
+
+不稳定排序：“快希**选**堆”
+
+稳定排序：“插冒归计基”
+
 ### 4.1 快速排序
 
 ```java
@@ -973,13 +981,36 @@ public class QuickSort implements IArraySort {
 
 
 
+### 4.2 归并排序/mergesort
+
+原理：
+
+利用分治的思想来对序列进行排序。
+
+对一个长为n的待排序的序列，我们将其分解成两个长度为n/2的子序列。
+
+每次先递归调用函数使两个子序列有序，然后我们再线性合并两个有序的子序列使整个序列有序。
+
+分：
+
+- 规模缩小，多次二分，最后大小为1
+  - 二分的原因，是为了在合并的时候，2个子序列大小接近，比较时能够
+
+治：
+
+- 问题降维，有序多维数组合并，多次合并，最终合并所需要全局有序
 
 
-### 4.2 归并排序
+
+特性：
+
+- 稳定排序
+- 总时间复杂度O(nlogn)，空间复杂度O(n)
+  - logN的合并次数，每次合并的时间复杂度是n
 
 ```java
 class Solution {
-    // 临时空间
+    // 临时空间, 申请了额外O(N)的空间
     int[] tmp;
 
     public int[] sortArray(int[] nums) {
@@ -987,13 +1018,13 @@ class Solution {
         mergeSort(nums, 0, nums.length - 1);
         return nums;
     }
-
+	// 递归
     public void mergeSort(int[] nums, int l, int r) {
         // 区间为1，停止递归
         if (l >= r) {
             return;
         }
-        int mid = (l + r) >> 1;
+        int mid = l + ( r -l ) >> 1;
         // 递归，排序左右
         mergeSort(nums, l, mid);
         mergeSort(nums, mid + 1, r);
@@ -1014,22 +1045,115 @@ class Solution {
         while (j <= r) {
             tmp[cnt++] = nums[j++];
         }
+        // 将已拍好序的子序列，复制回原数组
         for (int k = 0; k < r - l + 1; ++k) {
             nums[k + l] = tmp[k];
         }
     }
 }
+
+/** 
+非递归与递归版本相反，
+从1开始，逐渐增大已排序子数组的长度大小，直到长度超过原始数组长度。
+*/
+public int[] MergeSort(int[] nums) {
+    // 同样申请临时空间
+    int[] tempNums = new int[nums.length];
+    int len = 1;
+    while (len < nums.length) {
+        // 一趟归并，归并结果存放在tempNums
+        MergePass(nums, tempNums,len);
+        len *=2;
+        // 一趟归并，归并结果存放在nums
+        // 对于len > nums.length 情况，实际只做了一次O(N)复制
+        MergePass(tempNums, nums,len);
+        len *=2;
+    }
+    // 每次循环最后存放在nums，所以返回nums
+    return nums;
+}
+// nums 待排， mergedNums 作为结果存储，len当前有序子序列大小
+// 一趟排序，令每个相邻的2*len大小的子数组有序
+public void MergePass(int[] nums, int[] mergedNums, int len) {
+    int i = 0;
+    int size = nums.length;
+    // 使每个2*len的子序列有序
+    while (i+ 2*len  < size) {
+        // 合并len的两个有序子数组
+        merge(nums, mergedNums, i, i + len - 1, i + 2*len -1);
+        i+=2*len;
+    }
+    // 剩余不足2*len的末尾子序列
+   	if (i + len < size - 1) {
+        // 合并2个有序子数组
+        merge(nums, mergedNums, i, i + len - 1, size -1);
+    } else {
+       // 只有一个长度在len内的有序数组，那么直接复制
+        while(i < size) {
+            mergedNums[i]=nums[i];
+            i++;
+        }
+    }
+}
+
+// 合并相邻的有序子数组
+// nums 待排， mergedNums 作为结果存储
+// left 是相邻有序子数组最左的下标，mid是相邻有序子数组左区间的末尾下标，right是右区间的末尾下标
+void merge(int[] nums, int[] mergedNums, int left, int mid, int right) {
+    // i,j 分别左右区间指针，k记录合并结果指针
+    int i = left, j = mid +1, k = left;
+    // 比较左右区间，结果按顺序存储在mergedNums
+    while( i <= mid && j <= right) {
+        if (nums[i] <= nums [j]) {
+            mergedNums[k++] = nums[i++];
+        } else {
+            mergedNums[k++] = nums[j++];
+        }
+    }
+    // 剩余子区间直接追加到末尾
+    // 左区间有剩余元素
+    while(i<=mid) {
+        mergedNums[k++]=nums[i++];
+    }
+    // 右区间
+    while(j<=right) {
+        mergedNums[k++]=nums[j++];
+    }
+}
 ```
 
-利用分治的思想来对序列进行排序。
-
-对一个长为n的待排序的序列，我们将其分解成两个长度为n/2的子序列。
-
-每次先递归调用函数使两个子序列有序，然后我们再线性合并两个有序的子序列使整个序列有序。
 
 
+优化：
 
-TODO:文件排序
+- 对小规模子数组使用插入排序
+  - 插入或者选择小规模数组（<15）上比递归版本的归并要快  （10%~15%）
+    - 元素数据较小时，数据近乎有序的几率比较大
+- 测试子数组是否有序
+  - `a[mid] <= a[mid+1]` 时证明直接合并即可
+- 减少复制，交替交换辅助数组和输入数组角色
+  - 非递归版本已做
+
+**大文件归并排序/ 外部排序**
+
+- 一个大文件，在磁盘上，但是内存存不下
+- 一个大文件，在单个服务器上存放不下，将这个大文件的内容进行排序
+
+原理：
+
+- 分割，然后排序单个小文件，使其内部有序
+- 多路归并，将每个小文件的数读取一个（批），在内存中进行归并，即为最终的大文件的一个（批）有序结果，循环该过程，完成整个文件的排序
+
+
+
+(TODO: pingcap/tanlent  tidb mergesort  go语言版本，性能优化，并发多协程版本：
+
+按cpu核数划分几个子区间进行merge sort，最后单协程做最后的merge？)
+
+#### REF
+
+- [图解排序算法(四)之归并排序](https://www.cnblogs.com/chengxiao/p/6194356.html)
+- [归并排序笔记](https://wiesen.github.io/post/%E5%BD%92%E5%B9%B6%E6%8E%92%E5%BA%8F%E7%AC%94%E8%AE%B0/)
 
 
 
@@ -1331,6 +1455,34 @@ public int maxDepth(TreeNode root) {
     }
     return max;
 }
+
+
+/**
+leetcode:对称二叉树
+给定一个二叉树，检查它是否是镜像对称的。
+    1
+   / \
+  2   2
+ / \ / \
+3  4 4  3
+*/
+public boolean isSymmetric(TreeNode root) {
+    if (root == null) {
+        return true;
+    }
+    return isSymmetricHelper(root.left, root.right);
+}
+
+public boolean isSymmetricHelper(TreeNode left, TreeNode right) {
+    //如果左右子节点都为空，说明当前节点是叶子节点，返回true
+    if (left == null && right == null)
+        return true;
+    //如果当前节点只有一个子节点或者有两个子节点，但两个子节点的值不相同，直接返回false
+    if (left == null || right == null || left.val != right.val)
+        return false;
+    //然后左子节点的左子节点和右子节点的右子节点比较，左子节点的右子节点和右子节点的左子节点比较
+    return isSymmetricHelper(left.left, right.right) && isSymmetricHelper(left.right, right.left);
+}
 ```
 
 
@@ -1347,18 +1499,13 @@ public int maxDepth(TreeNode root) {
 // leetcode: 删除排序数组中的重复项
 /*
 给你一个有序数组 nums ，请你 原地 删除重复出现的元素，使每个元素 只出现一次 ，返回删除后数组的新长度。
-
 不要使用额外的数组空间，你必须在 原地 修改输入数组 并在使用 O(1) 额外空间的条件下完成。
 
 提示：
 0 <= nums.length <= 3 * 104
 -104 <= nums[i] <= 104
 nums 已按升序排列
-
-作者：力扣 (LeetCode)
 链接：https://leetcode-cn.com/leetbook/read/top-interview-questions-easy/x2gy9m/
-来源：力扣（LeetCode）
-著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
 */
 
 /*
@@ -1444,6 +1591,115 @@ public void reverse(int[] nums, int start, int end) {
         int temp = nums[start];
         nums[start++] = nums[end];
         nums[end--] = temp;
+    }
+}
+
+
+/* leetcode: 合并有序数组
+给你两个按 非递减顺序 排列的整数数组 nums1 和 nums2，另有两个整数 m 和 n ，分别表示 nums1 和 nums2 中的元素数目。
+
+请你 合并 nums2 到 nums1 中，使合并后的数组同样按 非递减顺序 排列。
+
+注意：最终，合并后数组不应由函数返回，而是存储在数组 nums1 中。为了应对这种情况，nums1 的初始长度为 m + n，其中前 m 个元素表示应合并的元素，后 n 个元素为 0 ，应忽略。nums2 的长度为 n 。
+
+提示：
+nums1.length == m + n
+nums2.length == n
+0 <= m, n <= 200
+1 <= m + n <= 200
+-109 <= nums1[i], nums2[j] <= 109
+
+思路：
+按一般的思路，从头开始，会导致nums1多次后移调整位置，
+所以，可以考虑从尾部开始，因为尾部是空闲的，可以保证直接插入到最终的正确的位置。
+*/
+public void merge(int[] nums1, int m, int[] nums2, int n) {
+    int k = nums1.length -1;
+    while (m > 0 && n > 0) {
+        if (nums1[m-1] >= nums2[n-1]){
+            nums1[k--] =  nums1[m-1];
+            m--;
+        } else {
+            nums1[k--] =  nums2[n-1];
+            n--;
+        }
+    }
+    while(n > 0) {
+        nums1[k--] =  nums2[n-1];
+        n--;
+    }
+}
+```
+
+
+
+shuffle：
+
+```java
+/*
+leetcode: 打乱数组
+给你一个整数数组 nums ，设计算法来打乱一个没有重复元素的数组。
+
+实现 Solution class:
+
+Solution(int[] nums) 使用整数数组 nums 初始化对象
+int[] reset() 重设数组到它的初始状态并返回
+int[] shuffle() 返回数组随机打乱后的结果
+
+Solution solution = new Solution([1, 2, 3]);
+solution.shuffle();    // 打乱数组 [1,2,3] 并返回结果。任何 [1,2,3]的排列返回的概率应该相同。例如，返回 [3, 1, 2]
+solution.reset();      // 重设数组到它的初始状态 [1, 2, 3] 。返回 [1, 2, 3]
+solution.shuffle();    // 随机返回数组 [1, 2, 3] 打乱后的结果。例如，返回 [1, 3, 2]
+
+提示：
+
+1 <= nums.length <= 200
+-106 <= nums[i] <= 106
+nums 中的所有元素都是 唯一的
+最多可以调用 5 * 104 次 reset 和 shuffle
+
+链接：https://leetcode-cn.com/leetbook/read/top-interview-questions-easy/xn6gq1/
+
+题解：
+该题的关键是，保证等概率出现在任何位置，需要每次调整过、交换过位置后，不能再次参与调整位置。
+那么，一种方法是，不放回抽样，将抽出的结果，顺序放到以经抽的位置（交换值）。然后再从剩余的位置抽取。
+由于需要抽取/交换n-1次，时间复杂度是O(n)
+*/
+class Solution {
+
+    int[] origin;
+    Random random = new Random();
+
+    public Solution(int[] nums) {
+        this.origin = nums;
+    }
+
+    /** Resets the array to its original configuration and return it. */
+    public int[] reset() {
+        return origin;
+    }
+
+    /** Returns a random shuffling of the array. */
+    public int[] shuffle() {
+        if (origin == null) {
+            return null;
+        }
+        int[] newNums = origin.clone();
+        int len = newNums.length;
+        for (int i = len ; i> 0; i--) {
+            int j = random.nextInt(i);
+            swap(newNums, i-1, j);
+        }
+        return newNums;
+    }
+
+    private void swap(int[] nums, int i, int j) {
+        if (i != j) {
+            // 范围限制不会有溢出
+            nums[i] = nums[i] + nums[j];
+            nums[j] = nums[i] - nums[j];
+            nums[i] = nums[i] - nums[j]; 
+        }
     }
 }
 ```
