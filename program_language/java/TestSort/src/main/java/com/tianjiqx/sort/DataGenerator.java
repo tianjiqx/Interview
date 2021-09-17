@@ -97,8 +97,8 @@ public class DataGenerator {
           //byteBuffer.put( (byte) '\t' );
         }
         byteBuffer.flip();
-        outputChannel.write(byteBuffer, offset);
-        offset += byteBuffer.arrayOffset();
+        int bytes = outputChannel.write(byteBuffer, offset);
+        offset += bytes;
         byteBuffer.clear();
       }
       outputChannel.close();
@@ -135,6 +135,10 @@ public class DataGenerator {
     return genData(DEFAULT_FILE_NAME, 2 * BATCH_SIZE);
   }
 
+  private GenAndWriter[] genDefaultData3() {
+    return genData(DEFAULT_FILE_NAME, 100 * BATCH_SIZE);
+  }
+
   private GenAndWriter[] genData(String path, int num) {
     File file = new File(path);
     if (!file.exists()) {
@@ -151,7 +155,7 @@ public class DataGenerator {
           new GenAndWriter(completeNum,1,path,num,0)
       };
     } else {
-      int threadNum = Math.min(num/BATCH_SIZE + 1, CPU_NUMS);
+      int threadNum = Math.min((int) Math.ceil( num * 1.0/BATCH_SIZE), CPU_NUMS);
       GenAndWriter[] genAndWriters = new GenAndWriter[threadNum];
       int bathSize = num / threadNum;
       for (int i = 0; i <  threadNum -1; i++) {
@@ -172,16 +176,23 @@ public class DataGenerator {
     new PrintRunTime() {
       @Override
       public void run() throws Exception {
-        GenAndWriter[] writers = generator.genDefaultData2();
+        GenAndWriter[] writers = generator.genDefaultData3();
         for (int i = 0;i < writers.length; i++) {
           generator.threadPoolExecutor.execute(writers[i]);
         }
 
         while(generator.threadPoolExecutor.getActiveCount() >0) {
-          Thread.sleep(1000); //sleep 1s
+          Thread.sleep(10); //sleep 10 ms
         }
       }
     }.execute("Generate dafualt data");
+
+    /*
+    2CPU, 400MB, 5.24s, 76.34MB/s
+    this:GenAndWriter{completeNum=0, totol_task_num=2, file_name='default_data.txt', size=52428800, offset=0}
+    this:GenAndWriter{completeNum=0, totol_task_num=2, file_name='default_data.txt', size=52428800, offset=209715200}
+    Generate dafualt data spend time total 5248 ms
+    */
 
     generator.clear();
   }

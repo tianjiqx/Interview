@@ -515,6 +515,7 @@ Buffer：缓冲区
 - [Java NIO浅析-美团技术团队](https://tech.meituan.com/2016/11/04/nio.html)
 - [Java NIO 系列教程-并发编程网译文](https://ifeve.com/java-nio-all/)
 - Netty权威指南 第2版-李林峰
+- [ByteBuffer浅显易懂的图解原理](https://greedypirate.github.io/2019/12/01/ByteBuffer%E6%B5%85%E6%98%BE%E6%98%93%E6%87%82%E7%9A%84%E5%9B%BE%E8%A7%A3%E5%8E%9F%E7%90%86/#ByteBuffer)
 
 
 
@@ -626,7 +627,6 @@ GC调优经验： Full GC 的成本远高于 Minor GC，尽量将新对象预留
 - [java8添加并查看GC日志(ParNew+CMS)](https://segmentfault.com/a/1190000021453229)
 - [JVM GC 日志详解](https://juejin.cn/post/6844903791909666823)
 - [java9 gc log参数迁移](https://www.jianshu.com/p/a99dec3230c9)
-
 
 
 

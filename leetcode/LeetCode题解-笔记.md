@@ -1078,13 +1078,13 @@ public void MergePass(int[] nums, int[] mergedNums, int len) {
     int i = 0;
     int size = nums.length;
     // 使每个2*len的子序列有序
-    while (i+ 2*len  < size) {
+    while (i+ 2*len  <= size) {
         // 合并len的两个有序子数组
         merge(nums, mergedNums, i, i + len - 1, i + 2*len -1);
         i+=2*len;
     }
     // 剩余不足2*len的末尾子序列
-   	if (i + len < size - 1) {
+   	if (i + len < size) {
         // 合并2个有序子数组
         merge(nums, mergedNums, i, i + len - 1, size -1);
     } else {
