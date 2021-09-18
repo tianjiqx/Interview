@@ -467,11 +467,68 @@ public class ThreadLocal<T> {
 
 
 
+### 2.3 synchronized
+
+`synchronized`同步关键字，用于保证只有单个线程进程操作。
+
+使用方式：
+
+- 普通方法
+  - 对当前对象加锁
+- 静态方法
+  - 当前 `Class` 对象
+- 代码块
+  - `synchronized() {}`
+  - `()` 中的对象
+    - `(xxx.class)` class的所有对象
+    - `(this)`,`(object)` 单个对象
+
+原理：
+
+java 编译期，生成对monitor的 enter和exit指令，排他的对monitor的占用。
+
+java底层对加锁过程，锁的变化，有一定的优化。
+
+
+
+REF
+
+- [synchronized 关键字原理](https://crossoverjie.top/2018/01/14/Synchronize/)
+
+
+
+### 2.4 BlockingQueue & BlockingDeque
+
+单向队列BlockingQueue 关键方法：
+
+|      | 抛出异常   | 返回特定值(true/false) | 阻塞    | 超时                        |
+| ---- | ---------- | ---------------------- | ------- | --------------------------- |
+| 插入 | add(o)     | offer(o)               | put(o)  | offer(o, timeout, timeunit) |
+| 移除 | remove(o)  | poll(o)                | take(o) | poll(timeout, timeunit)     |
+| 检查 | element(o) | peek(o)                |         |                             |
+
+双端队列BlockingDeque。同名函数增加First/Last后缀。
+
+
+
+常用的实现类：
+
+- ArrayBlockingQueue 数组实现，有界
+- LinkedBlockingQueue 链表实现，可以设置大小
+- DelayQueue 维持特定的延迟
+- PriorityBlockingQueue 优先级，无界
+  - ` java.util.PriorityQueue `
+- SynchronousQueue 同步队列，单元素
+
+
+
+REF
+
+- [JUC集合: BlockingQueue详解](https://www.pdai.tech/md/java/thread/java-thread-x-juc-collection-BlockingQueue.html)
+
+
+
 ## 3.IO
-
-
-
-
 
 ### 3.1 Java NIO
 
@@ -484,7 +541,9 @@ public class ThreadLocal<T> {
 - IO复用：linux的select/poll机制，支持多个fd的读写，顺序扫描fd状态，以支持IO复用
   - epoll：基于事件驱动代替select/poll的顺序扫描
 - NIO：基于IO复用的非阻塞IO，事件驱动
+  - selector 轮询
 - AIO(异步IO)：不但等待就绪是非阻塞的，就连数据从网卡到内存的过程也是异步的。内核通知IO完成
+  - 订阅-通知及机制，非轮询
 
 ![](java笔记-图片/Snipaste_2021-06-15_19-32-00.png)
 
@@ -500,13 +559,75 @@ public class ThreadLocal<T> {
 
 
 
+
+
+**IO复用**
+
+![](java笔记-图片/java-io-nio-1.png)
+
 #### 概念
 
-Selector：多路复用器。用以轮询注册的channel是否就绪，就绪后进行IO操作
+- Selector：多路复用器。用以轮询注册的channel是否就绪，就绪后进行IO操作
+  - 事件订阅
+    - 注册，处理OS的事件
+  - Channel管理
+    - 注册
+    - 分发事件
 
-Channel：通道
+- Channel：通道
 
-Buffer：缓冲区
+- Buffer：缓冲区
+  - 对通道的读写操作进行合并
+
+
+
+#### 传统IO模型
+
+![](java笔记-图片/java-io-reactor-1.png)
+
+Server端使用OS线程池处理任务。
+
+缺点：
+
+- 服务器的并发量取决于服务器工作线程数，工作线程数无法提到很高
+- IO读写，CPU计算耦合，无法充分利用资源
+- IO是阻塞类型，受会受网络波动，降低服务器利用资源率
+
+#### Reactor事件驱动模型
+
+![](java笔记-图片/java-io-reactor-2.png)
+
+优点：
+
+- 单线程处理网络请求，一定程度解耦，网络请求与处理分离，提高处理效率
+- 异步非阻塞模型，不受网络请求IO波动影响
+
+
+
+**业务处理与IO分离**
+
+![](java笔记-图片/java-io-reactor-3.png)
+
+- 一个线程进行客户端连接的接收以及网络读写事件的处理
+  - reactor线程
+- 客户端连接之后，将该连接交由线程池进行数据的编解码以及业务计算
+
+优点：
+
+- 进一步的解耦处理逻辑，网络读写与业务计算分离
+
+缺点：
+
+- 单线程处理高并发的网络请求，存在瓶颈
+
+**并发读写**
+
+![](java笔记-图片/java-io-reactor-4.png)
+
+- Reactor拆分
+  - mainReactor 负责客户端连接的处理
+  - subReactor 通过线程池，处理网络IO读写
+- 业务逻辑计算，也通过线程池进行处理
 
 
 
@@ -516,6 +637,15 @@ Buffer：缓冲区
 - [Java NIO 系列教程-并发编程网译文](https://ifeve.com/java-nio-all/)
 - Netty权威指南 第2版-李林峰
 - [ByteBuffer浅显易懂的图解原理](https://greedypirate.github.io/2019/12/01/ByteBuffer%E6%B5%85%E6%98%BE%E6%98%93%E6%87%82%E7%9A%84%E5%9B%BE%E8%A7%A3%E5%8E%9F%E7%90%86/#ByteBuffer)
+- [Java NIO - IO多路复用详解](https://www.pdai.tech/md/java/io/java-io-nio-select-epoll.html)
+- [Java AIO](https://www.pdai.tech/md/java/io/java-io-aio.html)
+
+
+
+扩展材料：
+
+- [Java 异步编程](https://www.baeldung.com/java-asynchronous-programming)  一些库，框架
+- [Java FutureTask](https://www.pdai.tech/md/java/thread/java-thread-x-juc-executor-FutureTask.html)
 
 
 
@@ -551,6 +681,10 @@ Buffer：缓冲区
 
 
 GC日志打印，停顿时间
+
+扩展材料：
+
+- [调试排错 - Java问题排查：工具单](https://www.pdai.tech/md/java/jvm/java-jvm-debug-tools-list.html)  btrace, dmesg
 
 
 
