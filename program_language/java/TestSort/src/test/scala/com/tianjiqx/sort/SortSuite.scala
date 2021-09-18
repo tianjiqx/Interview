@@ -43,5 +43,17 @@ class SortSuite extends AnyFunSuite {
     System.out.println("sorted: " + util.Arrays.toString(nums))
     assertArrayEquals(std, nums);
   }
+  
+  test("java std Arrays parallelSort") {
+    val data = Reader.read(ThreadPoolTool.DEFAULT_FILE_NAME, 0, 100 * ThreadPoolTool.BATCH_SIZE)
+
+    new PrintRunTime {
+      override def run(): Unit = {
+          Arrays.parallelSort(data)
+      }
+    }.execute("Arrays.parallelSort")
+
+    //Arrays.parallelSort spend time total 10091 ms
+  }
 
 }

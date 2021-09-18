@@ -34,3 +34,32 @@ int空间是4B， 10亿行（10^9），大小空间是4GB，加上mergesort的�
 - 每次merge各子线程时从临时空间，再复制回原来的数组，带来额外O(2N) 复制时间
 - 线程间的上下文切换带来开销
 
+
+
+比较：
+
+100M 行的int排序，400MB， 在2CPU的虚拟机环境下
+
+`java.util.Arrays.parallelSort spend time total 10091 ms | 9804 ms`
+
+Arrays.parallelSort使用的 ForkJoin 框架实现递归并行合并排序。
+
+
+
+REF：
+
+- [具有双重合并的并行归并排序](https://github.com/ahmet-uyar/parallel-merge-sort)  发现的一个并行归并实现，基于CyclicBarrier，同步线程的逻辑更加优雅，实现的性能比Arrays.parallelSort 略好。
+
+
+
+个人实现的版本，在合并单个线程完成的sort的部分，根据从头到尾按顺序扫一遍，每次会被的大小可能并不相等，考虑到可能某些线程，因为数据倾斜的原因，sort的很快，所以选择抢占式，只是检查过程通过定期轮询，感觉不够优雅，最初想法是，添加已完成sort任务或者merge任务范围时，检查是否能够产生新的merge任务放到任务队列，主线程从merge任务队列中取，执行merge任务，应该更优雅。
+
+
+
+TODO：
+
+- 外部排序（文件），分布式
+  - shuffle
+- 其他数据库系统中的mergesort实现
+- 其他语言实现：go，rust
+
