@@ -71,6 +71,8 @@ public class ParalleMergeSort {
     private int mid;
     private int end;
 
+    private ConcurrentHashMap<Integer, SortRange> CompleteSortRangeStartMap;
+
     @Override
     public void run() {
       Sort.merge(nums, tempNums, start, mid, end);
@@ -80,6 +82,7 @@ public class ParalleMergeSort {
         nums[i] = tempNums[i];
         i++;
       }
+      CompleteSortRangeStartMap.put(start,new SortRange(start, end+1));
       completeNum.incrementAndGet();
       LOG.info("Merge sub array complete " + completeNum.get() * 100 / totol_task_num + " %.");
       System.out.println("Merge sub array [" + start + "," + end + "].");
@@ -88,7 +91,7 @@ public class ParalleMergeSort {
     }
 
     public MergeWorker(AtomicInteger completeNum, int totol_task_num, int[] nums, int[] tempNums,
-        int start, int mid, int end) {
+        int start, int mid, int end, ConcurrentHashMap<Integer, SortRange> CompleteSortRangeStartMap) {
       this.completeNum = completeNum;
       this.totol_task_num = totol_task_num;
       this.nums = nums;
@@ -96,6 +99,7 @@ public class ParalleMergeSort {
       this.start = start;
       this.mid = mid;
       this.end = end;
+      this.CompleteSortRangeStartMap = CompleteSortRangeStartMap;
     }
   }
 
@@ -119,7 +123,7 @@ public class ParalleMergeSort {
     return workers;
   }
 
-  public SortWorker[] genDefaultParalleSortWorker2(int[] nums) {
+  public SortWorker[] genDefaultParalleSortWorker2(int[] nums, int[] tempNums) {
     int batchsize = ThreadPoolTool.BATCH_SIZE;
     int taskNums = 10;
     SortWorker[] workers = new SortWorker[taskNums];
@@ -127,7 +131,7 @@ public class ParalleMergeSort {
     AtomicInteger completeNum = new AtomicInteger();
 
     batchsize = (int) Math.ceil(nums.length * 1.0 / taskNums);
-    int[] tempNums = new int[nums.length];
+
     int start = 0;
     for (int i = 0; i < taskNums - 1; i++) {
       workers[i] = new SortWorker(completeNum, taskNums, nums, tempNums,
@@ -146,7 +150,7 @@ public class ParalleMergeSort {
       int start, int mid, int end) {
     System.out.println("genMergeWorker:["+ start+","+end+"]");
     return new MergeWorker(completeNum, totol_task_num,
-        nums, tempNums, start,mid, end);
+        nums, tempNums, start,mid, end, this.CompleteSortRangeStartMap);
   }
 
 
@@ -182,7 +186,8 @@ public class ParalleMergeSort {
       public void run() throws Exception {
         int[] tempNums = new int[data.length];
 
-        SortWorker[] workers = paralleMergeSort.genDefaultParalleSortWorker1(data, tempNums);
+        //SortWorker[] workers = paralleMergeSort.genDefaultParalleSortWorker1(data, tempNums);
+        SortWorker[] workers = paralleMergeSort.genDefaultParalleSortWorker2(data, tempNums);
 
         for (int i = 0;i < workers.length; i++) {
           threadPoolTool.threadPoolExecutor.execute(workers[i]);
@@ -252,6 +257,10 @@ public class ParalleMergeSort {
       Sort data multi thread spend time total 12260 ms
 
       Sort data multi thread spend time total 11491 ms
+      Sort data multi thread spend time total 10616 ms
+
+      2CPU,10thread,400MB, 100M, 23.477s
+      Sort data multi thread spend time total 23477 ms
      */
   }
 
