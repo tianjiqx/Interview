@@ -2,14 +2,13 @@ package com.tianjiqx.sort;
 
 import com.tianjiqx.utils.PrintRunTime;
 import com.tianjiqx.utils.ThreadPoolTool;
-import java.nio.file.FileSystemNotFoundException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +21,18 @@ public class ParalleMergeSort {
   private static Logger LOG = LoggerFactory.getLogger(ParalleMergeSort.class);
 
   public final ConcurrentHashMap<Integer, SortRange> CompleteSortRangeStartMap = new ConcurrentHashMap<>();
+  public final LinkedBlockingQueue<MergeRange> mergeTaskQueue = new LinkedBlockingQueue<>();
+
+  class MergeRange {
+    public SortRange left;
+    public SortRange right;
+
+    public MergeRange(SortRange left, SortRange right) {
+      this.left = left;
+      this.right = right;
+    }
+  }
+
 
   class SortWorker implements Runnable {
 
@@ -32,12 +43,32 @@ public class ParalleMergeSort {
     private int[] tempNums;
 
     private SortRange sortRange;
-    private ConcurrentHashMap<Integer, SortRange> CompleteSortRangeStartMap;
+    private ConcurrentHashMap<Integer, SortRange> completeSortRangeStartMap;
+    private LinkedBlockingQueue<MergeRange> mergeTaskQueue;
 
     @Override
     public void run() {
       Sort.MergeSort(nums, tempNums, 1, sortRange);
-      CompleteSortRangeStartMap.put(Integer.valueOf(sortRange.start), sortRange);
+      synchronized (completeSortRangeStartMap){
+        SortRange range = completeSortRangeStartMap.remove(sortRange.end);
+        if (range != null) {
+          mergeTaskQueue.add(new MergeRange(sortRange, range));
+        } else {
+         Object[] preRanges =
+             completeSortRangeStartMap.entrySet()
+             .stream().filter(e -> e.getValue().end == sortRange.start)
+             .map(e -> e.getValue()).toArray();
+          if (preRanges.length > 0) {
+            SortRange preRange = (SortRange) preRanges[0];
+            completeSortRangeStartMap.remove(preRange);
+            mergeTaskQueue.add(new MergeRange(preRange, sortRange));
+          } else {
+            completeSortRangeStartMap.put(sortRange.start, sortRange);
+          }
+        }
+      }
+
+      //completeSortRangeStartMap.put(Integer.valueOf(sortRange.start), sortRange);
       completeNum.incrementAndGet();
       LOG.info("Sort sub array complete " + completeNum.get() * 100 / totol_task_num + " %.");
       System.out.println("sort sub array [" + sortRange.start + "," + sortRange.end + "].");
@@ -46,13 +77,15 @@ public class ParalleMergeSort {
     }
 
     public SortWorker(AtomicInteger completeNum, int totol_task_num, int[] nums, int[] tempNums,
-        SortRange sortRange, ConcurrentHashMap<Integer, SortRange> CompleteSortRangeStartMap) {
+        SortRange sortRange, ConcurrentHashMap<Integer, SortRange> CompleteSortRangeStartMap,
+        LinkedBlockingQueue<MergeRange> mergeTaskQueue) {
       this.completeNum = completeNum;
       this.totol_task_num = totol_task_num;
       this.nums = nums;
       this.tempNums = tempNums;
       this.sortRange = sortRange;
-      this.CompleteSortRangeStartMap = CompleteSortRangeStartMap;
+      this.completeSortRangeStartMap = CompleteSortRangeStartMap;
+      this.mergeTaskQueue = mergeTaskQueue;
     }
   }
 
@@ -71,18 +104,37 @@ public class ParalleMergeSort {
     private int mid;
     private int end;
 
-    private ConcurrentHashMap<Integer, SortRange> CompleteSortRangeStartMap;
+    private ConcurrentHashMap<Integer, SortRange> completeSortRangeStartMap;
+    private LinkedBlockingQueue<MergeRange> mergeTaskQueue;
 
     @Override
     public void run() {
-      Sort.merge(nums, tempNums, start, mid, end);
+      Sort.merge(nums, tempNums, start, mid-1, end-1);
       int i = start;
       // ugly, todo refine
-      while (i <= end) {
+      while (i < end) {
         nums[i] = tempNums[i];
         i++;
       }
-      CompleteSortRangeStartMap.put(start,new SortRange(start, end+1));
+      synchronized (completeSortRangeStartMap) {
+        SortRange range = completeSortRangeStartMap.remove(end);
+        if (range != null) {
+          mergeTaskQueue.add(new MergeRange(new SortRange(start, end), range));
+        } else {
+          Object[] preRanges =
+              completeSortRangeStartMap.entrySet()
+                  .stream().filter(e -> e.getValue().end == start)
+                  .map(e -> e.getValue()).toArray();
+          if (preRanges.length > 0) {
+            SortRange preRange = (SortRange) preRanges[0];
+            completeSortRangeStartMap.remove(preRange);
+            mergeTaskQueue.add(new MergeRange(preRange, new SortRange(start, end)));
+          } else {
+            completeSortRangeStartMap.put(start, new SortRange(start, end));
+          }
+        }
+      }
+      //completeSortRangeStartMap.put(start,new SortRange(start, end));
       completeNum.incrementAndGet();
       LOG.info("Merge sub array complete " + completeNum.get() * 100 / totol_task_num + " %.");
       System.out.println("Merge sub array [" + start + "," + end + "].");
@@ -91,7 +143,8 @@ public class ParalleMergeSort {
     }
 
     public MergeWorker(AtomicInteger completeNum, int totol_task_num, int[] nums, int[] tempNums,
-        int start, int mid, int end, ConcurrentHashMap<Integer, SortRange> CompleteSortRangeStartMap) {
+        int start, int mid, int end, ConcurrentHashMap<Integer, SortRange> CompleteSortRangeStartMap,
+        LinkedBlockingQueue<MergeRange> mergeTaskQueue) {
       this.completeNum = completeNum;
       this.totol_task_num = totol_task_num;
       this.nums = nums;
@@ -99,7 +152,8 @@ public class ParalleMergeSort {
       this.start = start;
       this.mid = mid;
       this.end = end;
-      this.CompleteSortRangeStartMap = CompleteSortRangeStartMap;
+      this.completeSortRangeStartMap = CompleteSortRangeStartMap;
+      this.mergeTaskQueue = mergeTaskQueue;
     }
   }
 
@@ -115,11 +169,11 @@ public class ParalleMergeSort {
     int start = 0;
     for (int i = 0; i < taskNums - 1; i++) {
       workers[i] = new SortWorker(completeNum, taskNums, nums, tempNums,
-          new SortRange(start, start + batchsize), this.CompleteSortRangeStartMap);
+          new SortRange(start, start + batchsize), this.CompleteSortRangeStartMap, this.mergeTaskQueue);
       start += batchsize;
     }
     workers[taskNums - 1] = new SortWorker(completeNum, taskNums, nums, tempNums,
-        new SortRange(start, nums.length), this.CompleteSortRangeStartMap);
+        new SortRange(start, nums.length), this.CompleteSortRangeStartMap, this.mergeTaskQueue);
     return workers;
   }
 
@@ -136,12 +190,12 @@ public class ParalleMergeSort {
     for (int i = 0; i < taskNums - 1; i++) {
       workers[i] = new SortWorker(completeNum, taskNums, nums, tempNums,
           new SortRange(start, start + batchsize),
-          this.CompleteSortRangeStartMap);
+          this.CompleteSortRangeStartMap, this.mergeTaskQueue);
       start += batchsize;
     }
     workers[taskNums - 1] = new SortWorker(completeNum, taskNums, nums, tempNums,
         new SortRange(start, nums.length),
-        this.CompleteSortRangeStartMap);
+        this.CompleteSortRangeStartMap, this.mergeTaskQueue);
     return workers;
   }
 
@@ -150,7 +204,7 @@ public class ParalleMergeSort {
       int start, int mid, int end) {
     System.out.println("genMergeWorker:["+ start+","+end+"]");
     return new MergeWorker(completeNum, totol_task_num,
-        nums, tempNums, start,mid, end, this.CompleteSortRangeStartMap);
+        nums, tempNums, start, mid, end, this.CompleteSortRangeStartMap, this.mergeTaskQueue);
   }
 
 
@@ -186,8 +240,8 @@ public class ParalleMergeSort {
       public void run() throws Exception {
         int[] tempNums = new int[data.length];
 
-        //SortWorker[] workers = paralleMergeSort.genDefaultParalleSortWorker1(data, tempNums);
-        SortWorker[] workers = paralleMergeSort.genDefaultParalleSortWorker2(data, tempNums);
+        SortWorker[] workers = paralleMergeSort.genDefaultParalleSortWorker1(data, tempNums);
+        //SortWorker[] workers = paralleMergeSort.genDefaultParalleSortWorker2(data, tempNums);
 
         for (int i = 0;i < workers.length; i++) {
           threadPoolTool.threadPoolExecutor.execute(workers[i]);
@@ -195,9 +249,24 @@ public class ParalleMergeSort {
 
         int totalMergeCount = workers.length - 1;
         AtomicInteger completeNum = new AtomicInteger();
+        int i = 0;
+        //while(i < totalMergeCount) {  //completeNum.get() < totalMergeCount
+        while(completeNum.get() < totalMergeCount) {
 
-        while(completeNum.get() < totalMergeCount || threadPoolTool.threadPoolExecutor.getActiveCount() > 0) {
-
+          // 1. task queue
+          i++;
+          //MergeRange mergeRange = paralleMergeSort.mergeTaskQueue.take(); //poll(100, TimeUnit.MICROSECONDS);
+          // still need use poll, take will block main thread
+          MergeRange mergeRange = paralleMergeSort.mergeTaskQueue.poll(0, TimeUnit.MICROSECONDS);
+          if (mergeRange != null) {
+            MergeWorker mergeWorker = paralleMergeSort.genMergeWorker(completeNum, totalMergeCount,
+                data, tempNums, mergeRange.left.start,mergeRange.left.end, mergeRange.right.end);
+            threadPoolTool.threadPoolExecutor.execute(mergeWorker);
+          }
+          // free thread
+          Thread.sleep(10); //sleep 10 ms
+          /*
+          // 2. polling way
           synchronized (paralleMergeSort.CompleteSortRangeStartMap) {
             //System.out.println("size " + paralleMergeSort.CompleteSortRangeStartMap.size()) ;
             if (paralleMergeSort.CompleteSortRangeStartMap.size() >= 2) {
@@ -215,7 +284,7 @@ public class ParalleMergeSort {
                   paralleMergeSort.CompleteSortRangeStartMap.remove(starts[j]);
                   paralleMergeSort.CompleteSortRangeStartMap.remove(starts[j+1]);
                   MergeWorker mergeWorker = paralleMergeSort.genMergeWorker(completeNum, totalMergeCount,
-                      data, tempNums, starts[j],sortRange.end -1, nextRange.end -1);
+                      data, tempNums, starts[j],sortRange.end, nextRange.end);
                   threadPoolTool.threadPoolExecutor.execute(mergeWorker);
                   j++;
                 }
@@ -224,6 +293,13 @@ public class ParalleMergeSort {
             }
           }
 
+          Thread.sleep(10); //sleep 10 ms
+           */
+        }
+
+        // wait lastest merge task end
+        while (threadPoolTool.threadPoolExecutor.getActiveCount() > 0) {
+          //System.out.println("sleep end...");
           Thread.sleep(10); //sleep 10 ms
         }
 
@@ -261,6 +337,13 @@ public class ParalleMergeSort {
 
       2CPU,10thread,400MB, 100M, 23.477s
       Sort data multi thread spend time total 23477 ms
+
+      // task queue version:
+
+
+
+      2CPU,10thread,400MB, 100M, 15.67s, 7.9M/s
+      Sort data multi thread spend time total 15673 ms
      */
   }
 
