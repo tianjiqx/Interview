@@ -325,7 +325,7 @@ ScheduledThreadPoolExecutor是一个实现类，可以在给定的延迟后运�
  }
 ```
 
-#### 2.2.3基本原理
+#### 2.2.3 基本原理
 
 为了达到ThreadLocal的作用，一种可能的实现是，ThreadLocal 变量 自己维护一个ConcurrentHashMap\<thread， value> ，但是该方法的缺点是：
 
@@ -452,9 +452,9 @@ public class ThreadLocal<T> {
 
 对于内存泄漏，Thread.exit()会令threadLocals=null，最终会释放ThreadLocalMap，让其能够回收。
 
-但是如果使用的是线程池，那么就有可能因为，线程一致活着，导致ThreadLocal对象的泄漏。
+但是如果使用的是线程池，那么就有可能因为，线程一直活着，导致ThreadLocal对象的泄漏。
 
-那么最好的做法，是避免key为null的ThreadLocalMap的entry产生，在线程对自己ThreadLocal对象使用完后，调用remove方法，去除自己线程管理的entry（ThreadLocal变量的弱引用与值）。
+那么最好的做法，是避免key为null的ThreadLocalMap的entry产生，在线程对自己ThreadLocal对象使用完后，调用remove方法，去除自己线程管理的entry（ThreadLocal变量的弱引用和值）。
 
 
 
@@ -538,12 +538,15 @@ REF
 
 - 同步阻塞I/O：socket.read()，如果TCP RecvBuffer里没有数据，函数会一直阻塞，直到收到数据，返回读到的数据
 - 非阻塞IO：数据未准备好时，也能正常返回，准备好时，正常处理数据
+  - 需要轮询IO是否准备好（polling）
 - IO复用：linux的select/poll机制，支持多个fd的读写，顺序扫描fd状态，以支持IO复用
   - epoll：基于事件驱动代替select/poll的顺序扫描
+  - 单个线程程能够处理多个I/O事件，避免为每个IO创建一个一个线程
+    - 但是处理I/O事件可能是阻塞式处理的
 - NIO：基于IO复用的非阻塞IO，事件驱动
-  - selector 轮询
+  - selector 轮询Channel
 - AIO(异步IO)：不但等待就绪是非阻塞的，就连数据从网卡到内存的过程也是异步的。内核通知IO完成
-  - 订阅-通知及机制，非轮询
+  - 订阅-通知机制，应用注册，内核主动通知，非应用主动轮询内核
 
 ![](java笔记-图片/Snipaste_2021-06-15_19-32-00.png)
 
@@ -629,6 +632,61 @@ Server端使用OS线程池处理任务。
   - subReactor 通过线程池，处理网络IO读写
 - 业务逻辑计算，也通过线程池进行处理
 
+#### 异步IO
+
+![](java笔记-图片/java-io-aio-1.png)
+
+操作系统内核的支持：
+
+- windows  IOCP
+- liunx epoll模拟
+  - 回调机制通知？
+
+
+
+java NIO 与 AIO 区别：
+
+- NIO，（Non-blocking I/O）
+  - 实现了 IO 多路复用中的 Reactor 模型
+  - 通过配置监听的通道 Channel 为非阻塞，能够轮询其他Channel
+    - Socket Channel 配置为非阻塞
+    - FileChannel无法配置为非阻塞（针对本地文件，本身就不会阻塞，更多用于零拷贝，并发多线程写单个文件）
+  - 零拷贝支持
+    - MappedByteBuffer，抽象类，堆外的虚拟内存，内存文件映射，手动反射调用释放
+    - DirectByteBuffer，MappedByteBuffer的实现类，对象在堆内，内部缓冲区在堆外
+    - FileChannel
+      - 文件读写、映射和操作的通道，线程安全
+      - `transferTo()/transferFrom()` 零拷贝
+        - 检查内核是否支持sendfile，再尝试内存文件映射，目的通道必须是FileChannelImpl 或者 SelChImpl 类型，最后使用普通IO（零拷贝原理，具有多种，可见[IO性能改进技术](https://github.com/tianjiqx/notes/blob/master/performance/IO%E6%80%A7%E8%83%BD%E6%94%B9%E8%BF%9B%E6%8A%80%E6%9C%AF.md)）
+- AIO，重点在异步，操作系统内核通知事件是IO完成，而NIO是通知可以开始IO
+
+
+
+**Netty框架**
+
+- 高性能、异步事件驱动的基于NIO的网络应用程序框架，提供了对TCP、UDP和文件传输的支持
+  - 自身是异步的，但是可以上层封装为同步的接口
+    - 基本原理是Netty 为要传递的消息创建一个会话session，具有唯一的sessionId，正常的异步发送消息，Future机制响应异常处理，然后阻塞该会话，直到检查到session标记完成，或者超时。Netty 接受消息时，handler根据sessionid对session状态进行改变，以及存放消息处理结果到session中，然被阻塞的session能够及时处理响应，取出结果。
+- 可以用来实现客户端与服务端的RPC通信
+
+
+
+Fork/Join 框架
+
+- 并行执行框架，将大任务分割成小任务，最后汇总小任务结果
+  - fork 分裂产生子任务，并计算
+    - 实际是将自身作为子任务加入队列，创建/唤醒工作线程处理(执行`compute`)
+  - join等待子任务执行结果，并得到结果
+- 实现原理
+  - 每个工作线程，维护自己的双端队列存放子任务`ForkJoinTask`
+    - 双端便于使用工作窃取算法
+  - 工作线程池ForkJoinPool，处理子任务ForkJoinTask
+    - ForkJoinTask关键方法`compute()`
+      - `compute` 做任务切分，合并结果，或者最粒度任务的执行
+- ForkJoinTask子类
+  - RecursiveAction 没有返回结果的任务
+  - RecursiveTask 有返回结果的任务
+
 
 
 #### REF
@@ -639,13 +697,147 @@ Server端使用OS线程池处理任务。
 - [ByteBuffer浅显易懂的图解原理](https://greedypirate.github.io/2019/12/01/ByteBuffer%E6%B5%85%E6%98%BE%E6%98%93%E6%87%82%E7%9A%84%E5%9B%BE%E8%A7%A3%E5%8E%9F%E7%90%86/#ByteBuffer)
 - [Java NIO - IO多路复用详解](https://www.pdai.tech/md/java/io/java-io-nio-select-epoll.html)
 - [Java AIO](https://www.pdai.tech/md/java/io/java-io-aio.html)
+- [Java NIO 零拷贝](https://www.pdai.tech/md/java/io/java-io-nio-zerocopy.html)
+- [Linux下的I/O复用与epoll详解](https://www.cnblogs.com/lojunren/p/3856290.html)
+  - select 轮询FD状态
+  - poll 取消监听文件数量限制（max 65535 fd）
+  - epoll 采样回调方式检查到绪事件，避免轮询
+    - 65535 fd
+- java并发的艺术 infoq   Fork/Join
+
+扩展：
+
+- 《Java并发编程之美》翟陆续
 
 
 
-扩展材料：
+
+
+### 3.2 JAVA 异步编程
+
+原始线程 thread 其实也可以异步完成任何操作，java8后，`thread()` 还可以接受lambada 表达式，来执行。
+
+缺点:
+
+- 无法直接返回结果，只能通过传递线程安全的对象，进行数据共享和返回结果。
+- 可扩展性不强，受限线程数量
+- 需要丑陋的代码检查线程是否执行完毕，结果是否返回，异常处理。
+  - 改善的方式使用CountDownlatch
+    - `private static CountDownLatch countDownLatch = new CountDownLatch(2) `
+    - 子线程`countDownLatch.countDown()`
+    - 主线程`countDownLatch.await()` 阻塞等待子线程完成
+
+
+
+异步编程的优点：
+
+- 处理逻辑与IO的解耦，资源的充分利用，提供并发量
+  - IO密集型
+- 作为一种并行手段，充分利用多核性能
+  - CPU密集型
+
+
+
+#### 3.2.1 FutureTask和CompletableFuture
+
+**Future & FutureTask**
+
+- Future
+  - 代表一个异步计算的结果
+  - 方法
+    - `isDone` 是否完成
+    - `isCancelled` 是否取消
+    - `get()/get(long timeout, TimeUnit unit)`  阻塞式获取结果
+    - `cancel(boolean mayInterruptIfRunning)` 尝试取消异步计算任务
+- FutureTask
+  - 表示一个可被取消的异步计算任务，实现`Runnable`,`Future`接口
+    - 因此可以通过线程池的`execute()` 方法提交执行
+  - 关键方法
+    - 构造函数
+      - 接受`Callable` 对象
+      - 接受的Runnable和Future对象
+    - `run ` 执行逻辑
+
+```java
+// 这里可以用ThreadPoolExecutor，手动设置线程池参数，更好
+ExecutorService threadpool = Executors.newCachedThreadPool();
+Future<Long> futureTask = threadpool.submit(() -> factorial(number));
+// futureTask.isDone() 获取Future状态
+while (!futureTask.isDone()) {
+    System.out.println("FutureTask is not finished yet..."); 
+}
+// futureTask.get() 获取Future结果，阻塞式
+long result = futureTask.get(); 
+
+threadpool.shutdown();
+```
+
+
+
+缺点：
+
+- 无法表达多个FutureTask之间的关系
+  - 组合多个异步计算
+- 获取Future结果，需要get()阻塞调用线程
+
+**CompletableFuture**
+
+- 实现`Future`,`CompletionStage` 接口
+- 通过编程方式显式地设置计算结果和状态
+  - `future.complete(result);`
+- 可以作为一个CompletionStage（计算阶段），当它的计算完成时可以触发一个函数或者行为
+- 当多个线程企图调用同一个CompletableFuture的complete、cancel方式时只有一个线程会成功
+- 所有异步的方法在没有显式指定Executor参数的情形下都是复用ForkJoinPool的commonPool()线程池来执行
+- 方法
+  - `runAsync` 无返回值的异步计算
+  - `supplyAsync` 带有返回值的异步计算，可以通过get获取
+  - `thenRunAsync` 执行完成任务后，激活其他任务
+  - `thenAcceptAsync` 执行完成任务后，激活其他任务，并获取之前任务的返回值
+  - `whenCompleteAsync` 设置回调函数
+  - `thenCompose` 组合，顺序执行另一个CompletableFuture
+  - `thenCombine` 同时并发CompletableFuture
+  - `allOf` 等待所有并发执行CompletableFuture完成
+  - `anyOf` 等待任一并发执行CompletableFuture完成
+
+```java
+CompletableFuture<Long> completableFuture = CompletableFuture.supplyAsync(() -> factorial(number));
+// 检查任务状态
+while (!completableFuture.isDone()) {
+    System.out.println("CompletableFuture is not finished yet...");
+}
+// 获取future结果，阻塞
+long result = completableFuture.get();
+```
+
+
+
+缺点:
+
+- 回调地狱
+- 多个Future依然难以编排
+- 不支持延迟计算和高级错误处理
+
+（rust async/awit 语法就明显更简单）
+
+#### 3.2.2 异步框架
+
+- RxJava
+
+- Reactor
+- Spring @Async
+- Web Serverlet
+- Netty
+
+
+
+REF
 
 - [Java 异步编程](https://www.baeldung.com/java-asynchronous-programming)  一些库，框架
 - [Java FutureTask](https://www.pdai.tech/md/java/thread/java-thread-x-juc-executor-FutureTask.html)
+- [以两种异步模型应用案例，深度解析 Future 接口](https://xie.infoq.cn/article/d42e22d85f37b9596e47b2c33)
+- [Java技术域中的异步编程](https://chinalhr.github.io/post/java-asyncprogram/)
+- 《Java异步编程实战》翟陆续
+- [一文带你彻底了解Java异步编程](http://ifeve.com/%E4%B8%80%E6%96%87%E5%B8%A6%E4%BD%A0%E5%BD%BB%E5%BA%95%E4%BA%86%E8%A7%A3java%E5%BC%82%E6%AD%A5%E7%BC%96%E7%A8%8B/)  工程实践角度
 
 
 
