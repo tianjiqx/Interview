@@ -1,6 +1,10 @@
 # go语言-笔记
 
-## 结构体
+[TOC]
+
+## 1. 基本语法
+
+### 1.1 结构体
 
 结构体是一种聚合的数据类型，是由零个或多个任意类型的值聚合成的实体  。
 
@@ -33,7 +37,7 @@ p := Point{1, 2}
 
 
 
-## 函数
+### 1.2 函数
 
 ```go
 // 函数声明包括函数名、形式参数列表、返回值列表（可省略） 以及函数体
@@ -58,7 +62,7 @@ defer函数：defer语句中的函数会在return语句更新返回值变量后�
 
 
 
-## 方法
+### 1.3 方法
 
 在函数声明时，在其名字之前放上一个变量，即是一个方法 。
 
@@ -114,7 +118,7 @@ p := Point{1, 2}
 
 
 
-## 接口
+### 1.4 接口
 
 对其他类型行为的抽象和概括。接口类型不会和特定的实现细节绑定。
 
@@ -160,7 +164,28 @@ Writer
 
 
 
+## 1.5 包
+
+
+
+
+
+## 2. 并发
+
+
+
+
+
+## 3. 标准库
+
+
+
+
+
 ## REF
 
 - Go语言圣经The Go Programming Language (Alan A.A. Donovan)
+- [Go 指南](http://tour.studygolang.com/) head first go
+- [Go语言标准库](http://books.studygolang.com/The-Golang-Standard-Library-by-Example/)
+- 
 
