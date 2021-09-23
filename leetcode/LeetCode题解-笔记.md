@@ -1716,6 +1716,173 @@ Arrays.sort();
 
 
 
+第k大的数：
+
+```C++
+/*
+leetcode 215 无序数组，第k大的元素
+给定整数数组 nums 和整数 k，请返回数组中第 k 个最大的元素。
+请注意，你需要找的是数组排序后的第 k 个最大的元素，而不是第 k 个不同的元素。
+示例：
+输入: [3,2,1,5,6,4] 和 k = 2
+输出: 5
+提示：
+1 <= k <= nums.length <= 104
+-104 <= nums[i] <= 104
+
+坑：逆序，递减的第k个值
+
+方法：
+1. 先排序，在求第k位； 复杂度O(NlogN)
+2. 改进，使用快速排序，或者选择排序，只保证第k个位置的顺序已经排好即可。
+（k很小，或者k很大可以选择排序可以接受；k比较中间时，快排通过随机选pivot可以在O(n) 期望内把k位置排好）
+*/
+class Solution {
+public:
+    int findKthLargest(vector<int>& nums, int k) {
+    	return quickSelect(nums, 0, nums.size() - 1, k - 1);
+    }
+    // 逆序排，从大到小
+    int quickSelect(vector<int>& nums, int l, int r, int k) {
+    	int index = randomPartition(nums, l, r);
+    	//cout << "randomPartition " << index <<endl;
+    	if (index == k) {
+    		return nums[k];
+    	}else {
+    		return index < k ? quickSelect(nums, index + 1, r, k):quickSelect(nums, l, index-1, k);
+    	}
+    }
+
+    int randomPartition(vector<int>& nums, int l, int r) {
+    	int pivot = r; // 基准值位置
+    	int i =  rand() % (r - l + 1) + l;
+    	//cout << "randomPartition l=" << l <<" r=" << r <<endl;
+    	swap(nums, i, pivot);
+    	// index表示[left+1,right]区间第一个比pivot大的位置，在它左边都是大于的pivot，右边是比pivot小的元素
+    	int index = l - 1;
+    	// pivot 位置暂不处理
+    	for (int i = l; i< r; i++) {
+    		// 将比基准值大的值与index位置交换，将大值放到前面，同时后移index位置，保证index仍然是比pivot大的元素第一个位置
+    		if (nums[i] > nums[pivot]) {
+    			swap(nums, i, ++index);
+    		}
+    	}
+    	// index 最后一个比pivot大的位置，那么index + 1， 即等于pivot位置
+    	// 原来的index+1 也比pivot的值小，可以安全交换到原来pivot位置
+    	swap(nums, pivot, index+1);
+
+    	return index + 1;
+    }
+
+    void swap(vector<int>& nums, int i, int j) {
+    	int temp = nums[i];
+    	nums[i] = nums[j];
+    	nums[j] = temp;
+    }
+};
+```
+
+两个有序数组的中位数
+
+```c++
+/**
+leetcode 4:
+给定两个大小分别为 m 和 n 的正序（从小到大）数组 nums1 和 nums2。请你找出并返回这两个正序数组的中位数 。
+
+输入：nums1 = [1,3], nums2 = [2]
+输出：2.00000
+解释：合并数组 = [1,2,3] ，中位数 2
+输入：nums1 = [1,2], nums2 = [3,4]
+输出：2.50000
+解释：合并数组 = [1,2,3,4] ，中位数 (2 + 3) / 2 = 2.5
+
+https://leetcode-cn.com/problems/median-of-two-sorted-arrays/
+
+注意：奇数，偶数总长度
+
+分析：
+原始的方法：两个指针，顺序比较，扫描加起来，过半。即求得中位数位置。O(m+n)
+优化：因为数组本身是有序的，可以二分查找，迭代的淘汰小值。
+分类讨论：
+m+n是奇数，中位数是两个有序数组中的第 (m+n)/2个元素
+m+n是偶数时，中位数是两个有序数组中的第 (m+n)/2个元素和第 (m+n)/2+1个元素的平均值
+也即查找两个有序数组中第k小的元素，k为(m+n)/2， (m+n)/2+1。
+
+A[k/2-1] 和 B[k/2-1] 前分别有k/2 - 1个元素，那么比Min(A[k/2-1],B[k/2-1])小的元素，最多有 k-2个。
+因此，小于Min(A[k/2-1],B[k/2-1])的部分都可以淘汰（从vector中remove）。
+
+情况：
+1) A[k/2-1] <= B[k/2-1], 淘汰A[0] 到 A[k/2-1]
+2) A[k/2-1] > B[k/2-1],淘汰B[0] 到 B[k/2-1]
+淘汰之后，更新k = k/2
+
+边界情况处理：
+1)A[k/2-1], B[k/2-1] 数组越界，去末尾值作为比较值，然后k的更新根据实际排除的个数进行更新。
+2)A/B 集合为空（都被淘汰），则B/A[k]为所求
+3)k=1, 取min(A[0],B[0])
+
+https://leetcode-cn.com/problems/median-of-two-sorted-arrays/solution/xun-zhao-liang-ge-you-xu-shu-zu-de-zhong-wei-s-114/
+*/
+class Solution {
+public:
+    int getKthElement(const vector<int>& nums1, const vector<int>& nums2, int k) {
+        /* 主要思路：要找到第 k (k>1) 小的元素，那么就取 pivot1 = nums1[k/2-1] 和 pivot2 = nums2[k/2-1] 进行比较
+         * 这里的 "/" 表示整除
+         * nums1 中小于等于 pivot1 的元素有 nums1[0 .. k/2-2] 共计 k/2-1 个
+         * nums2 中小于等于 pivot2 的元素有 nums2[0 .. k/2-2] 共计 k/2-1 个
+         * 取 pivot = min(pivot1, pivot2)，两个数组中小于等于 pivot 的元素共计不会超过 (k/2-1) + (k/2-1) <= k-2 个
+         * 这样 pivot 本身最大也只能是第 k-1 小的元素
+         * 如果 pivot = pivot1，那么 nums1[0 .. k/2-1] 都不可能是第 k 小的元素。把这些元素全部 "删除"，剩下的作为新的 nums1 数组
+         * 如果 pivot = pivot2，那么 nums2[0 .. k/2-1] 都不可能是第 k 小的元素。把这些元素全部 "删除"，剩下的作为新的 nums2 数组
+         * 由于我们 "删除" 了一些元素（这些元素都比第 k 小的元素要小），因此需要修改 k 的值，减去删除的数的个数
+         */
+
+        int m = nums1.size();
+        int n = nums2.size();
+        int index1 = 0, index2 = 0;
+
+        while (true) {
+            // 边界情况
+            if (index1 == m) { // nums1是空集了
+                return nums2[index2 + k - 1];
+            }
+            if (index2 == n) {// nums2是空集了
+                return nums1[index1 + k - 1];
+            }
+            if (k == 1) {
+                return min(nums1[index1], nums2[index2]);
+            }
+
+            // 正常情况
+            int newIndex1 = min(index1 + k / 2 - 1, m - 1);
+            int newIndex2 = min(index2 + k / 2 - 1, n - 1);
+            int pivot1 = nums1[newIndex1];
+            int pivot2 = nums2[newIndex2];
+            if (pivot1 <= pivot2) { // 淘汰nums1
+                k -= newIndex1 - index1 + 1;
+                index1 = newIndex1 + 1;
+            }
+            else { // 淘汰nums2
+                k -= newIndex2 - index2 + 1;
+                index2 = newIndex2 + 1;
+            }
+        }
+    }
+
+    double findMedianSortedArrays(vector<int>& nums1, vector<int>& nums2) {
+        int totalLength = nums1.size() + nums2.size();
+        if (totalLength % 2 == 1) {
+            return getKthElement(nums1, nums2, (totalLength + 1) / 2);
+        }
+        else {
+            return (getKthElement(nums1, nums2, totalLength / 2) + getKthElement(nums1, nums2, totalLength / 2 + 1)) / 2.0;
+        }
+    }
+};
+```
+
+
+
 ### 哈希表Map
 
 映射的集合。
