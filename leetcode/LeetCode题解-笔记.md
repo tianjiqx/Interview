@@ -1148,7 +1148,11 @@ void merge(int[] nums, int[] mergedNums, int left, int mid, int right) {
 
 (TODO: pingcap/tanlent  tidb mergesort  go语言版本，性能优化，并发多协程版本：
 
-按cpu核数划分几个子区间进行merge sort，最后单协程做最后的merge？)
+按cpu核数划分几个子区间进行merge sort，最后单协程做最后的merge？
+
+- [java版本 并行mergesort实现 doc](https://github.com/tianjiqx/Interview/blob/main/program_language/java/%E5%B9%B6%E8%A1%8CMergeSort.md)   [code](https://github.com/tianjiqx/Interview/tree/main/program_language/java/TestSort))
+
+
 
 #### REF
 
@@ -1160,6 +1164,14 @@ void merge(int[] nums, int[] mergedNums, int left, int mid, int right) {
 ## 树
 
 
+
+
+
+
+
+REF
+
+- [二叉树后序遍历的两种易写的非递归写法](https://zhuanlan.zhihu.com/p/80578741)
 
 ## 数据结构
 
