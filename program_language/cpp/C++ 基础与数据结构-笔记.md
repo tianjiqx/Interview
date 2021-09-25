@@ -348,11 +348,11 @@ void midOrder(TreeNode* root) {
 }
 
 // 后序
-void visitAllRight(TreeNode* root, stack<TreeNode*> & stack, stack<TreeNode*> & stack2) {
+void visitAllRight(TreeNode* root, stack<TreeNode*> & stack, deque<int> & stack2) {
 	while(root != NULL) {
 		// visit root
 		//cout << root->value <<" ";
-		stack2.push(root);
+		stack2.push_back(root->value);
 		// 为了能够自底向上的访问左子树，自顶向下的存储left,出栈式在访问
 		if (root->left != NULL){
 			stack.push(root->left);
@@ -364,7 +364,7 @@ void postOrder(TreeNode * root) {
 	if (root == NULL)
 		return;
 	stack<TreeNode*> stack;
-	stack<TreeNode*> stack2;
+	deque<int> stack2;
 
 	while (true) {
 		// 以该节点开始，访问全部右子树
@@ -378,13 +378,13 @@ void postOrder(TreeNode * root) {
 		stack.pop();
 	}
 	while(!stack2.empty()){
-		cout<<stack2.top()->value<<" ";
-		stack2.pop();
+		cout<<stack2.back()<<" ";
+		stack2.pop_back();
 	}
 }
 ```
 
-
+还有不用栈的方式，利用线索二叉树的思想，时间换空间。
 
 
 
@@ -403,6 +403,7 @@ C++ STL（标准模板库）实现的常用数据结构。
 #include <algorithm>
 #include <numeric>
 #include <string>
+#include <cstring>
 using namespace std;
 ```
 
@@ -427,4 +428,5 @@ using namespace std;
 - [STL教程：C++ STL快速入门（非常详细）](http://c.biancheng.net/stl/)
 - [什么是尾递归？ - 罗宸的回答 - 知乎](https://www.zhihu.com/question/20761771/answer/20672305)
 - 《数据结构》-邓俊辉
+- [C++ string类（C++字符串）完全攻略](http://c.biancheng.net/view/400.html)
 
