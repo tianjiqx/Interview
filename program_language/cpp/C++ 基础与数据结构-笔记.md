@@ -386,6 +386,64 @@ void postOrder(TreeNode * root) {
 
 还有不用栈的方式，利用线索二叉树的思想，时间换空间。
 
+```C++
+/*
+leetcode: 二叉树层序遍历
+给你一个二叉树，请你返回其按 层序遍历 得到的节点值。 （即逐层地，从左到右访问所有节点）。
+    3
+   / \
+  9  20
+    /  \
+   15   7
+输出
+[
+  [3],
+  [9,20],
+  [15,7]
+]
+*/  
+vector<vector<int>> levelOrder(TreeNode* root) {
+	deque<TreeNode*> queue;
+	vector<vector<int>> ret;
+
+	if (root == NULL) {
+		return ret;
+	}
+	// 特殊节点，占位，标记当前层开始
+	// 从队列出队时，在队尾中再次进入
+	TreeNode * mark = new TreeNode();
+	queue.push_back(mark);
+	queue.push_back(root);
+	int depth = -1;
+	while (queue.size() > 1){
+		TreeNode* node = queue.front();
+		queue.pop_front();
+		// 标记节点再次入队, 并弹出下一个节点（一定存在，queue.size() > 1）
+		if (node == mark) {
+			queue.push_back(node);
+			node = queue.front();
+			queue.pop_front();
+			// 开启新行
+			depth++;
+			vector<int> v;
+			ret.push_back(v);
+		}
+		ret[depth].push_back(node->value);
+
+		if (node->left != NULL) {
+			queue.push_back(node->left);
+		}
+		if (node->right != NULL) {
+			queue.push_back(node->right);
+		}
+	}
+	return ret;
+}
+// 其他解法：内层增加循环，记录当前队列大小，一次性全取遍历
+```
+
+打印SQL树形的执行计划（explain），可以采用前序递归的方式，并记录深度，根据深度设置前置的空格长度。
+
 
 
 ## 3. STL
