@@ -466,9 +466,13 @@ let z: f64 = 1.23e+2;
 
 // arrays and slices
 let a = [0, 1, 2, 3, 4]; //定长数组
+// 值传递： fn update(arr:&mut [i32;3]){}
+// 引用传递： fn update(arr:&mut [i32;3]){}
 let middle = &a[1..4];  //切片，指向数组的一部分,[1, 2, 3]
 let slice_right = &a[1..]; // 获得的元素为[1, 2, 3, 4]
 let slice_left = &a[..3]; // 获得的元素为[0, 1, 2]
+// 通过切片传递，但是不能修改原始数据：fn use_slice(slice:&[i32]) {} 
+// 通过切片传递,声明可变切片，并且需要原始数据是可变的：fn use_slice(slice:&mut [i32]) {} 
 
 let mut ten_zeros: [i64; 10] = [0; 10]; // 所有元素可以初始化成相同的值,0
 
@@ -1405,6 +1409,21 @@ let f = File::open("hello.txt").unwrap_or_else(|error| {
 
 #### 2.4.5 控制流程语句
 
+###### if
+
+条件选择
+
+```rust
+let number = 3;
+if number < 5 {
+    println!("condition 1 was true");
+} else if number < 3 {
+     println!("condition 2 was true");
+} else {
+    println!("condition was false");
+}
+```
+
 ###### fo in
 
 `for in` 结构可以遍历 Iterator。
@@ -1416,6 +1435,39 @@ let f = File::open("hello.txt").unwrap_or_else(|error| {
 ```rust
 for i in 0..100 {
     //xxxx
+}
+```
+
+###### loop
+
+重复执行
+
+```rust
+let mut count = 0;
+'counting_up: loop {  // 外层
+    println!("count = {}", count);
+    let mut remaining = 10;
+    loop { // 内层
+        println!("remaining = {}", remaining);
+        if remaining == 9 {
+            break; // 跳出循环
+        }
+        if count == 2 {
+            break 'counting_up;
+        }
+        remaining -= 1;
+    }
+    count += 1;
+}
+```
+
+###### while
+
+```rust
+let mut number = 3;
+while number != 0 {
+    println!("{}!", number);
+    number = number - 1;
 }
 ```
 
@@ -1958,7 +2010,7 @@ unsafe Rust， 提供机制，告诉编译器，我确信没有问题，允许�
 
 - 使用原始指针，必须使用`unsafe`。
   - 创建，声明时不用
-  - 也有一些安全的方法，可以不用safe包含起来，比如`is_null()`
+  - 也有一些安全的方法，可以不用safe包含起来，比如`is_null()` ,`cast<U>`（转换成另一种类型的指针）
 - 原始指针可以是未对其unaligned 或 null的。但是解引用`*` 时，必须非null和对齐的。
 - 原始指针不会获取变量的所有权。
 
@@ -2005,8 +2057,6 @@ unsafe {
 }
 
 ```
-
-
 
 [primitive.pointer](https://doc.rust-lang.org/1.54.0/std/primitive.pointer.html)
 
