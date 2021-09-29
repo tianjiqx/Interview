@@ -467,6 +467,20 @@ using namespace std;
 
 
 
+## 4. 并发编程
+
+### 4.1 atomic
+
+原子类型是封装了一个值的类型，它的访问保证不会导致数据的竞争，并且可以用于在不同的线程之间同步内存访问。
+
+
+
+
+
+### 5. 异步编程
+
+
+
 
 
 ## REF
@@ -487,4 +501,6 @@ using namespace std;
 - [什么是尾递归？ - 罗宸的回答 - 知乎](https://www.zhihu.com/question/20761771/answer/20672305)
 - 《数据结构》-邓俊辉
 - [C++ string类（C++字符串）完全攻略](http://c.biancheng.net/view/400.html)
+- [c++11 多线程（3）atomic 总结](https://www.jianshu.com/p/8c1bb012d5f8)
+- [聊聊C++异步编程-1](https://zhuanlan.zhihu.com/p/77999255)
 

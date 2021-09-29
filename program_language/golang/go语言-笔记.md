@@ -164,6 +164,96 @@ Writer
 
 
 
+
+
+### 1.5 模块管理
+
+Go 在做依赖管理时会创建两个文件，`go.mod` 和 `go.sum`
+
+- `go.mod` 提供了依赖版本的全部信息
+  - `go env -w GO111MODULE=on`   #打开 Go modules
+    - `go env | grep MODULE` 检查模块功能是否开启
+    - 参数
+      - `auto`  项目中包含go.mod 时启用
+      - `on` 完全开启
+      - `off` 完全禁用
+  - 文件内容结构
+    - module：用于定义当前项目的模块路径。
+    - go：用于设置预期的 Go 版本。
+    - require：用于设置一个特定的模块版本。
+    - exclude：用于从使用中排除一个特定的模块版本。
+    - replace：用于将一个模块版本替换为另外一个模块版本
+      - 替换到国内镜像地址
+
+demo(cockroachdb/pebble) go.mod
+
+```
+module github.com/cockroachdb/pebble
+
+require (
+	github.com/DataDog/zstd v1.4.5
+	github.com/cespare/xxhash/v2 v2.1.1
+	github.com/cockroachdb/errors v1.8.1
+	github.com/cockroachdb/redact v1.0.8
+	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd
+	github.com/ghemawat/stream v0.0.0-20171120220530-696b145b53b9
+	github.com/golang/snappy v0.0.3
+	github.com/klauspost/compress v1.11.7
+	github.com/kr/pretty v0.1.0
+	github.com/pmezard/go-difflib v1.0.0
+	github.com/spf13/cobra v0.0.5
+	github.com/stretchr/testify v1.6.1
+	golang.org/x/exp v0.0.0-20200513190911-00229845015e
+	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
+	golang.org/x/sys v0.0.0-20210909193231-528a39cd75f3
+)
+
+go 1.13
+```
+
+- `go.sum` 提供防篡改的保障
+  - `<module> <version> <hash>` 
+    - module是依赖的路径
+    - version是依赖的版本号
+    - hash是以`h1:`开头的字符串, sha256
+  - 作用
+    - 提供分布式环境下的包管理依赖内容校验
+    - 作为 transparent log 来加强安全性
+      - 记录历史的checksum
+
+
+
+用法：
+
+- 创建go.mod文件
+  - `go mod init demo`  demo 是模块名，一般是当前目录名，go.mod文件也创建在当前目录下
+- 构建项目` go build`，生成 go.sum 文件
+  - 创建go.sum、demo文件
+- 编辑go.mod 
+  - `go mod edit [editing flags] [go.mod]`
+  - 也可以手动修改go.mod 文件，然后`go mod edit -fmt` 格式化
+  - `go mod tidy` 命令，只需要修改代码，会增加缺少的module，删除无用的module
+- 更新依赖版本
+  - `go list -m -versions github.com/gin-gonic/gin` 查看gin所有历史版本
+  - `go mod edit -require="github.com/gin-gonic/gin@v1.3.0"` 更新版本
+  - `go tidy` #更新现有依赖
+- 查看项目依赖的包
+  - `go list -m all`
+
+
+
+注意事项：
+
+- 无法外部模块 import  ，另一个模块的内部模块例如`"github.com/cockroachdb/pebble/internal/base"` 带有internal， 只能import `github.com/cockroachdb/pebble` 需要使用内部的常量，错误码，需要间接使用`pebble` 中定义的常量，或者变量，例如`ErrNotFound = base.ErrNotFound`  ，使用方式`pebble.ErrNotFound`
+
+
+
+REF：
+
+- [GO 依赖管理工具go Modules（官方推荐）](https://segmentfault.com/a/1190000020543746)
+- [go module 使用](https://segmentfault.com/a/1190000022868683)
+- [go.sum](https://studygolang.com/articles/25658)
+
 ## 1.5 包
 
 
@@ -182,10 +272,16 @@ Writer
 
 
 
+
+
+
+
+
+
 ## REF
 
 - Go语言圣经The Go Programming Language (Alan A.A. Donovan)
 - [Go 指南](http://tour.studygolang.com/) head first go
 - [Go语言标准库](http://books.studygolang.com/The-Golang-Standard-Library-by-Example/)
-- 
+- [Pebble详解：入门介绍](https://iswade.github.io/articles/pebble/)
 
