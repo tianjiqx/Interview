@@ -276,6 +276,15 @@ REF：
 
 
 
+## 附：常用命令
+
+
+
+- `go run  xxx.go`  运行单个，带main的文件
+
+- `go test -v  xxx_test.go` 测试文件，所有该文件下的单元测试
+- `go test -v -RUN TextXXX` 运行单个单元测试
+
 
 
 ## REF
@@ -283,5 +292,7 @@ REF：
 - Go语言圣经The Go Programming Language (Alan A.A. Donovan)
 - [Go 指南](http://tour.studygolang.com/) head first go
 - [Go语言标准库](http://books.studygolang.com/The-Golang-Standard-Library-by-Example/)
-- [Pebble详解：入门介绍](https://iswade.github.io/articles/pebble/)
+- [golang 中 sync.Mutex 和 sync.RWMutex](https://www.jianshu.com/p/679041bdaa39)
+  - 阻塞的写锁，优先级高于后续的读锁
+- [Go之定时器的使用](https://cloud.tencent.com/developer/article/1640646)
 
