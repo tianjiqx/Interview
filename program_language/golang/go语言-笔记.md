@@ -254,15 +254,67 @@ REF：
 - [go module 使用](https://segmentfault.com/a/1190000022868683)
 - [go.sum](https://studygolang.com/articles/25658)
 
-## 1.5 包
-
-
-
-
+### 
 
 ## 2. 并发
 
+### 2.1 通道channels
 
+创建
+
+`ch := make(chan int) // ch has type 'chan int'  `
+
+使用
+
+```go
+// 发送
+ch <- x // a send statement
+// 接收
+x = <-ch // a receive expression in an assignment statement
+<-ch // a receive statement; result is discarded
+// 关闭
+// 发送禁止，产生panic
+// 但是可以继续接受已关闭通道的值，通道中无值时，产生零值
+close(ch)
+```
+
+
+
+无缓冲通道的阻塞：
+
+- 通道中无数据，但执行读通道
+
+- 通道中无数据，向通道写数据，但无协程读取
+
+有缓冲通道的阻塞：
+
+- 通道的缓存无数据，但执行读通道
+- 通道的缓存已经占满，向通道写数据，但无协程读
+
+
+
+### 2.2 基于select的多路复用
+
+多路复用，即在监听会阻塞的多个通道中（可以是接收，发送），等待任意通道准备好，执行其处理逻辑。
+
+- select 会等待有能够执行的case时，执行
+  - 特殊select {} 会永远等待
+
+- 多个case同时就绪时，select会随机地选择一个执行
+- default来设置当其它的操作都不能够马上被处理时程序需要执行哪些逻辑  
+
+```go
+select {
+    case <-ch1: // 从通道ch1接受值，抛弃结果
+    // ...
+    case x := <-ch2: //从通道ch2接受值，x引用结果
+    // ...use x...
+    case ch3 <- y:
+    // ...
+    default:
+    // ...
+}
+```
 
 
 
