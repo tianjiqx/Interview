@@ -256,6 +256,54 @@ REF：
 
 ### 
 
+### 1.6 控制流程
+
+#### 1.6.1 条件
+
+```go
+if true {
+} else {
+}
+// switch
+switch var1 {
+    case val1:
+        ...
+    case val2,val3:
+        ...
+    default:
+        ...
+}
+// type switch
+switch x.(type){
+    case nil:
+       statement(s);      
+    case int:
+       statement(s); 
+}
+```
+
+#### 1.6.2 循环
+
+```go
+// for
+for init; condition; post { }
+
+// while
+for true {
+    // dead loop
+}
+
+// for range, 迭代slice、map、数组、字符串
+for key, value := range oldMap {
+    newMap[key] = value
+}
+for i, s := range strings {
+    fmt.Println(i, s)
+}
+```
+
+
+
 ## 2. 并发
 
 ### 2.1 通道channels
