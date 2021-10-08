@@ -450,7 +450,7 @@ c. D[i][j]=D[i][j-1]；递归找
 给定一个字符串 s ，找到其中最长的回文子序列，并返回该序列的长度。可以假设 s 的最大长度为 1000。
 分析:
 回文特点是，首位2个字母相同，在首尾不同时，对于[i][j]的字符串可以产生2个区间[i][j-1]和[i+1][j]。
-因为世界范围是多个区间，而非维度单向的递减，所以，被分做区间动态规划。
+因为实际范围是多个区间，而非维度单向的递减，所以，被分做区间动态规划。
 1）定义子问题（状态）
 D[i][j]是字符串[i:j]范围的最长回文子序列
 2）递推公式
@@ -1184,7 +1184,7 @@ void merge(int[] nums, int[] mergedNums, int left, int mid, int right) {
 
 
 
-## 树
+## 5.树
 
 
 
@@ -1201,6 +1201,8 @@ REF
 
 
 ### 位运算
+
+#### 二进制1的个数、位运算的加法
 
 ```c++
 /*
@@ -1283,6 +1285,8 @@ int BitAdd(int num1, int num2){
 
 双指针，用于一次遍历，或者step长不一样，检查是否相遇，判断是否有环。
 
+#### 删除链表的倒数第N个节点
+
 ```java
 /*
 leetcode:删除链表的倒数第N个节点，并且返回链表的头结点。
@@ -1311,6 +1315,8 @@ public ListNode removeNthFromEnd(ListNode head, int n) {
 ```
 
 借助栈，对单链表，回文，逆序访问。
+
+#### 回文链表
 
 ```java
 /*
@@ -1356,11 +1362,7 @@ public ListNode reverse(ListNode head) {
     return prev;
 }
 
-作者：数据结构和算法
-链接：https://leetcode-cn.com/leetbook/read/top-interview-questions-easy/xnv1oc/?discussion=HUFvuK
-来源：力扣（LeetCode）
-著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
-
+//链接：https://leetcode-cn.com/leetbook/read/top-interview-questions-easy/xnv1oc/?discussion=HUFvuK
 
 // 性能差一点
 public boolean isPalindrome(ListNode head) {
@@ -1399,6 +1401,8 @@ public boolean isPalindrome(ListNode head) {
 
 
 ### 二叉树树
+
+#### 二叉树最大深度、对称二叉树
 
 ```java
 /**
@@ -1573,6 +1577,8 @@ public boolean isSymmetricHelper(TreeNode left, TreeNode right) {
 
 ### 数组
 
+#### 去重、旋转数组、合并有序数组
+
 ```java
 // leetcode: 删除排序数组中的重复项
 /*
@@ -1709,9 +1715,7 @@ public void merge(int[] nums1, int m, int[] nums2, int n) {
 }
 ```
 
-
-
-shuffle：
+#### shuffle
 
 ```java
 /*
@@ -1782,19 +1786,47 @@ class Solution {
 }
 ```
 
-
-
-排序：
+#### 排序、最大数
 
 ```java
 import java.util.Arrays;
 // sort int[] arr, int from_Index, int to_Index
 Arrays.sort(); 
+
+
+/**
+给定一组非负整数 nums，重新排列每个数的顺序（每个数不可拆分）使之组成一个最大的整数。
+注意：输出结果可能非常大，所以你需要返回一个字符串而不是整数。
+*/
+public String largestNumber(int[] nums) {
+    int len=nums.length;
+    String[] strings=new String[len];
+    for (int i = 0; i <len ; i++) {
+        strings[i]=String.valueOf(nums[i]);
+    }
+    // 递减顺序
+    Arrays.sort(strings, (s1, s2) -> s2.concat(s1).compareTo(s1.concat(s2)));
+    // all is zero
+    if (strings[0].equals("0"))
+        return String.valueOf(0);
+    StringBuilder sb=new StringBuilder();
+    for (String s:strings) {
+        sb.append(s);
+    }
+    return sb.toString();
+}
+
+// java stream sorted
+public String largestNumber(int[] nums) {
+    String res = Arrays.stream(nums)
+        .mapToObj(String::valueOf)
+        .sorted((s1, s2) -> (s2 + s1).compareTo(s1 + s2))
+        .reduce("", (a , b) -> (a + b));
+    return res.charAt(0) == '0' ? "0" : res;
+}
 ```
 
-
-
-第k大的数：
+#### 第k大的数
 
 ```C++
 /*
@@ -1860,7 +1892,7 @@ public:
 };
 ```
 
-两个有序数组的中位数
+#### 两个有序数组的中位数
 
 ```c++
 /**
@@ -2000,6 +2032,8 @@ s.size(); // size of stack
 - E peek() - 取栈顶元素， 不移除 
 - E pop() - 移除栈顶元素并返回该元素 
 - E push(E item) - 向栈顶添加元素
+
+#### 有效的括号、最小栈
 
 ```java
 /*

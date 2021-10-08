@@ -237,6 +237,7 @@ go 1.13
   - `go list -m -versions github.com/gin-gonic/gin` 查看gin所有历史版本
   - `go mod edit -require="github.com/gin-gonic/gin@v1.3.0"` 更新版本
   - `go tidy` #更新现有依赖
+  - `go mod vendor` 将依赖的代码下载到vendor目录
 - 查看项目依赖的包
   - `go list -m all`
 
@@ -383,7 +384,7 @@ select {
 - `go run  xxx.go`  运行单个，带main的文件
 
 - `go test -v  xxx_test.go` 测试文件，所有该文件下的单元测试
-- `go test -v -RUN TextXXX` 运行单个单元测试
+- `go test -v -test.run TestXXX` 运行单个单元测试
 
 
 
@@ -395,4 +396,5 @@ select {
 - [golang 中 sync.Mutex 和 sync.RWMutex](https://www.jianshu.com/p/679041bdaa39)
   - 阻塞的写锁，优先级高于后续的读锁
 - [Go之定时器的使用](https://cloud.tencent.com/developer/article/1640646)
+- [Go (Golang) 编码指南](https://wiki.crdb.io/wiki/spaces/CRDB/pages/181371303/Go+Golang+coding+guidelines)  CRDB的go编码最佳实践
 
