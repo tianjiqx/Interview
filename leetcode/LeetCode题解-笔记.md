@@ -1544,6 +1544,22 @@ public boolean isSymmetricHelper(TreeNode left, TreeNode right) {
 
 
 
+### Trie (前缀树)
+
+递归的定义
+
+- 26个子孩子（孩子也是Trie树）
+- 是否是一个单词末尾节点（精确查找，避免长单词路径覆盖，导致误存在）
+
+基本方法
+
+- 初始化
+- 插入
+- 搜索
+- 前缀搜索
+
+ 
+
 ### 图
 
 - 图的存储结构
@@ -1825,6 +1841,20 @@ public String largestNumber(int[] nums) {
     return res.charAt(0) == '0' ? "0" : res;
 }
 ```
+
+```c++
+/*
+c++ stl sort
+*/
+#include<vector>
+#include<algorithm>
+
+int arr[] = {1, 2, 3, 4};
+vector<int> v5(arr, arr + 4);
+sort(v5.begin(), v5.end());
+```
+
+
 
 #### 第k大的数
 

@@ -2710,3 +2710,9 @@ TODO:
 - [【译】Rust与智能指针](https://zhuanlan.zhihu.com/p/265466916) 从完成类似用C++的一些数据结构（List）功能角度
 - [【译】Arc 在 Rust 中是如何工作的](https://zhuanlan.zhihu.com/p/300971430)
 
+
+
+扩展材料：
+
+- [Awesome Rust](https://github.com/rust-unofficial/awesome-rust) 资源，项目
+
