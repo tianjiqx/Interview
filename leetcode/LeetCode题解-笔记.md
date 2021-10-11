@@ -1524,6 +1524,88 @@ public boolean isSymmetricHelper(TreeNode left, TreeNode right) {
 }
 ```
 
+#### 二叉树初始化，遍历
+
+```java
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+// 初始化
+public TreeNode  init( int [] nums) {
+    if (nums.length ==0) return null;
+    TreeNode [] nodes = new TreeNode[nums.length];
+    int i = 1;
+    TreeNode root = new TreeNode(nums[0]);
+    nodes[0] = root;
+    while (i <  nums.length) {
+        if (nums[i] != 0) {
+            nodes[i] = new TreeNode(nums[i]);
+            if (i %2 == 1) {
+                nodes[(i-1)/2].left = nodes[i];
+            } else {
+                nodes[(i-1)/2].right = nodes[i];
+            }
+        }
+        i++;
+    }
+    return root;
+}
+// 层次遍历打印非空节点
+public void printBinaryTree(TreeNode root) {
+    if (root == null) {
+        return;
+    }
+    Queue<TreeNode> queue = new LinkedList<>();
+    queue.add(root);
+    while (!queue.isEmpty()) {
+        TreeNode node = queue.poll();
+        System.out.println(node.val);
+        if (node.left != null) {
+            queue.add(node.left);
+        }
+        if (node.right != null) {
+            queue.add(node.right);
+        }
+    }
+}
+```
+
+#### 平衡二叉树
+
+```c++
+/*
+判断给定二叉树是否平衡
+思路：
+根据定义，计算左右孩子的深度，不超过1时满足定义，并且左右孩子都是平衡二叉树
+*/
+bool isBalanced(TreeNode * root){
+    return maxDepth(root) != -1;
+}
+int maxDepth(TreeNode * root){
+    if (root == NULL){
+        return 0;
+    }
+    int leftDepth = maxDepth(root->left);
+    int rightDepth = maxDepth(root->right);
+    // 检查左右孩子是否平衡，以及当前节点是否平衡
+    if (leftDepth ==-1 || rightDepth ==-1 || abs(leftDepth - rightDepth) >1) {
+        return -1;
+    }
+    return max(leftDepth,rightDepth) + 1;
+}
+```
+
+
+
 ### 最小/大堆
 
 - 定义：**完全二叉树**，任何非叶子节点的关键字，都不大于/小于其左右孩子节点的关键字
@@ -1537,6 +1619,112 @@ public boolean isSymmetricHelper(TreeNode left, TreeNode right) {
   - 插在数组末尾，然后向上调整
 - 堆中删除堆顶元素
   - 将末尾元素替换堆顶元素，然后向下调整
+
+```java
+public class MinHeap {
+
+    private int [] heapArr;
+    private int maxHeapSize;
+    private int currHeapSize;
+
+    public boolean isFull() {
+        return currHeapSize == maxHeapSize;
+    }
+
+    public boolean isEmptry() {
+        return currHeapSize == 0;
+    }
+
+    public MinHeap(int maxHeapSize) {
+        this.maxHeapSize = maxHeapSize;
+        this.heapArr = new int[maxHeapSize];
+        this.currHeapSize = 0;
+    }
+
+    public MinHeap(int [] nums) {
+        this.heapArr = nums;
+        this.maxHeapSize = nums.length;
+        this.currHeapSize = nums.length;
+
+        int i = (currHeapSize -2)/2; //last has child node
+        while( i>=0) {
+            FilterDown(i); //make i is min Heap
+            i--;
+        }
+    }
+
+    public void FilterUp(int i) {
+        int j = i;
+        int temp = heapArr[i];
+        int p = (j-1)/2; // parent index
+        while (j > 0) { // j is not root node
+            if (heapArr[i] <= temp) { // find parent <= insert value
+                break;
+            } else {
+                heapArr[j] = heapArr[i]; // adjust, pushdown
+                j = i;
+                i = (j-1)/2;
+            }
+        }
+        heapArr[j] = temp;
+    }
+
+    public void FilterDown(int i) {
+        int j = 2*i +1; // left child
+        int temp = heapArr[i];
+        while (j < this.currHeapSize){
+            // find min child
+            if (j+1 < this.currHeapSize && heapArr[j+1] < heapArr[j]) {
+                j++;
+            }
+            if (temp <= heapArr[j]) {
+                break;
+            } else {
+                heapArr[i] = heapArr[j];
+                i = j;
+                j = 2*i +1;
+            }
+        }
+        heapArr[i] = temp;
+    }
+
+    public void Insert(int val) {
+        if (isFull()) {
+            System.out.println("Heap is full!");
+        }
+        heapArr[currHeapSize] = val;
+        FilterUp(currHeapSize);
+        currHeapSize++;
+    }
+
+    public int DeleteTop() {
+        if (isEmptry()) {
+            System.out.println("Heap is emptry!");
+        }
+        int temp = heapArr[0];
+        heapArr[0] = heapArr[currHeapSize-1];
+        currHeapSize--;
+        FilterDown(0);
+        return temp;
+    }
+
+    public void HeapSort(int [] nums) {
+        this.heapArr = nums;
+        this.maxHeapSize = nums.length;
+        this.currHeapSize = nums.length;
+
+        int i = (currHeapSize -2)/2; //last has child node
+        while( i>=0) {
+            FilterDown(i); //make i is min Heap
+            i--;
+        }
+        for (i =0; i< nums.length; i++) {
+            int min = DeleteTop();
+            System.out.print(min+" ");
+        }
+    }
+}
+```
 
 
 
