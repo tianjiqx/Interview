@@ -516,9 +516,6 @@ D[i][j]是使字符串[i,j]成为回文的最小字符个数
 ### 参考
 
 - [【DP专辑】ACM动态规划总结](https://blog.csdn.net/cc_again/article/details/25866971)
-- 
-
-
 
 
 
@@ -847,7 +844,6 @@ leetcode122.买卖股票的最佳时机 II
 注意：你不能同时参与多笔交易（你必须在再次购买前出售掉之前的股票）。
 分析：
 利润最大，即每次低买高买，吃掉波动中的所有上升阶段，忽略掉下降阶段。
-
 */
 public int maxProfit(int[] prices) {
     int profit =0;
@@ -967,7 +963,7 @@ public class QuickSort implements IArraySort {
         // 设定基准值（pivot）
         int pivot = left;
         /*
-        int i = rand() % (right - left + 1) + l; // 随机选一个作为我们的主元
+        int i = rand() % (right - left + 1) + left; // 随机选一个作为我们的主元
         swap(arr,i, pivot);
         */
         // index表示[left+1,right]区间第一个比pivot大的位置，在它左边都是小于的pivot，右边是比pivot大的元素
@@ -1603,6 +1599,56 @@ int maxDepth(TreeNode * root){
     return max(leftDepth,rightDepth) + 1;
 }
 ```
+
+#### 二叉搜索树
+
+特性：
+
+- 左节点 <= 根 <= 右节点
+- 中遍历即有序数组
+- 复杂度，各个操作，都是O（logN）
+
+```java
+/*
+求二叉搜索树间，任意两个节点间最小值。
+
+技巧：
+利用二叉搜索树的特点，中序遍历即为有序结果，则最小的节点差值，在中序结果，相邻结果的差值中取最小值。
+*/
+int min = Integer.MAX_VALUE;
+TreeNode prev =null;
+int getMinDifference(TreeNode root) {
+    if (root == null) return min;
+    // 遍历左子树，左子树的最小差值
+    getMinDifference(root.left);
+    if (prev !=null) {
+        min = Math.min(min,root.val - prev.val);
+    }
+    prev = root;
+    // 遍历右子树，右子树的最小差值
+    getMinDifference(root.right);
+    return min;
+}
+// 迭代版
+// 提供stack 模拟中序遍历
+Deque<TreeNode> stack = new ArrayDeque<TreeNode>();
+while(root != null || (!stack.isEmpty())) {
+    if (root != null) {
+        stack.push(root);
+        root = root.left;// 一直迭代到最左端
+    } else {
+        root = stack.pop();
+        if (prev != null) {
+            min = Math.min(min, root.val - prev.val);
+        }
+        prev = root;
+        // 重复过程检查当前右子树
+        root = root.right;
+    }
+}
+```
+
+
 
 
 
