@@ -2478,7 +2478,46 @@ hash.size();
 
 ### 字符串
 
+```java
+/**
+perm 枚举所有可能
+递归，分治
+perm(n)= n!
+*/
 
+public static List<String> subpermm(List<String> list ) {
+    int len = list.size();
+    if (len ==1) return list;
+    List<String> retList = new ArrayList<>();
+    //System.out.println(Arrays.toString(list.toArray()));
+
+    for (int i=0; i < len;i++) {
+        String s = ""+list.get(i);
+        List<String> l = new ArrayList<>();
+        l.addAll(list);
+        l.remove(i);
+        List<String> ret =  subpermm(l);
+        for (int j=0; j< ret.size(); j++ ){
+            retList.add(s + ret.get(j));
+        }
+    }
+    return retList;
+}
+
+public static void perm(int n) {
+    List<String> retList = new ArrayList<>();
+    for (int i =0; i < n; i++){
+        retList.add(""+ (i+1));
+    }
+
+    System.out.println(Arrays.toString(retList.toArray()));
+    List<String> list = subpermm(retList);
+
+    for(int i =0; i < list.size(); i++) {
+        System.out.println(list.get(i));
+    }
+}
+```
 
 
 
