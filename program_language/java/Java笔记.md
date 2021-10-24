@@ -157,6 +157,47 @@ JNI技术规范
 
 
 
+### 1.4 inline
+
+java中方法内联Method Inlining，指由编译器（无c++ inline关键字，JIT在运行期进行）将函数体插入调用处，减少函数调用开销,同时内联的代码为编译器提供更多的优化机会。是编译器的最重要优化手段。
+
+- 主要开销：**方法栈帧的生成、参数字段的压入、栈帧的弹出，指令执行地址的跳转**
+- 内联发生情形:
+  - 热点代码，编译器根据-XX:CompileThreshold判断代码执行次数超过阈值后，将其内联；
+    - 如果方法体过大，影响能缓存的方法数量，也不会内联， -XX:MaxFreqInlineSize，-XX:MaxInlineSize
+      - <325B、 <35B
+  - 方法很小，调用不频繁，进行常规内联（如Getter，Setter）
+    - 无多个实现类，C2编译器会智能的将公有方法的virtual_call，优化为optimized virtual_call；
+    - 有多个实现类，但是未实际使用多态特性，也尝试通过内联缓存（Inline Cache）完成方法内联
+- 推荐**private，static、final修饰**，可以直接内联
+  - Java中所有非私有的成员函数的调用都是虚调用
+  - 由于public，protect类型的虚方法可以被继承然后override，jvm则需要额外进行类型判断，通过实例对象找到VMT，通过VMT找到对应方法的地址，可能导致没有达到性能优化的效果
+
+
+
+REF
+
+- [jvm之方法内联优化](https://zhuanlan.zhihu.com/p/55630861)
+- [Java方法内联](https://www.cnblogs.com/xyz-star/p/10152564.html)
+- [《Java性能权威指南》笔记----JIT编译器](https://www.cnblogs.com/zaizhoumo/p/7562786.html)
+  - Java性能权威指南 第8章
+
+
+
+扩展材料：
+
+- [JIT & Code Cache](https://juejin.cn/post/6945654875468660772) JIT热点代码编译成机器码缓存
+  - 若jdk发生bug，导致code cache满，清空，编译未重新开始而解释执行，会产生奇怪的性能回退现象
+- [基本功 | Java即时编译器原理解析及实践](https://zhuanlan.zhihu.com/p/268042053) 美团，推荐
+  - 中间表达式IR
+  - 方法内联
+  - 逃逸分析
+  - 循环转换（展开，分离）
+  - （解释执行，未必一定比编译执行慢）
+- [运行期优化](https://klose911.github.io/html/jvm/runtime_optimize.html) 推荐
+
+
+
 ## 2. 并发
 
 ### 2.1 线程池ThreadPoolExecutor
