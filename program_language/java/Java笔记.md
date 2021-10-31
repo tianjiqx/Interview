@@ -997,3 +997,48 @@ GC调优经验： Full GC 的成本远高于 Minor GC，尽量将新对象预留
 
 
 
+## 5. JMH
+
+Java 微基准测试工具 (JMH，Java Microbenchmark Harness)，是一个 Java 工具，用于构建、运行和分析用 Java 和其他面向 JVM 的语言编写的 nano/micro/milli/macro 基准测试。
+
+
+
+优点：
+
+- 使用简便（依赖JMH的jar包，使用@Benchmark即可），自动处理JVM预热，JVM优化处理等问题
+- 主要测试单位时间测试的操作次数来反应代码的性能，甚至可以测试调试日志打印的性能时间
+  - 调试日志打印方式：使用字符串连接、使用变量参数和使用If进行debug可用检测
+- 可自定义配置（是否共享线程对象，预热次数，运行基准测试次数）
+- 提供生成jar包方式执行
+
+
+
+使用：
+
+官方提供maven构建脚本，推荐创建独立项目使用 Maven 设置依赖于应用程序 jar 文件。
+
+对于大型项目，将基准放在单独的子项目中，依赖于待测试模块。
+
+源码jmh-samples 目录下提供了一些编写的基准测试的样例。
+
+
+
+社区提供
+
+- [Gradle JMH 插件](https://github.com/melix/jmh-gradle-plugin)
+- [Scala SBT JMH 插件](https://github.com/ktoso/sbt-jmh)
+- IDE插件（官方不推荐在IDE中运行，因为环境可能变化，而直接在命令行运行）
+  - [IntelliJ IDEA JMH 插件](https://github.com/artyushov/idea-jmh-plugin)
+
+
+
+### REF
+
+- [github: openjdk/jmh](https://github.com/openjdk/jmh)
+- [Code Tools: jmh](http://openjdk.java.net/projects/code-tools/jmh/)
+- [JMH Samples](http://hg.openjdk.java.net/code-tools/jmh/file/tip/jmh-samples/src/main/java/org/openjdk/jmh/samples/)
+- [[译]使用JMH进行微基准测试：不要猜，要测试！](http://www.hollischuang.com/archives/1072)
+  - JVM一直在改进，对代码的微小改动，凭借最佳实践经验无法反应真实的情况，直接测试是写最好性能的代码的方式
+- [JMH-大厂是如何使用JMH进行Java代码性能测试的？必须掌握！](https://zhuanlan.zhihu.com/p/197257423)
+- [基准测试神器JMH——详解36个官方例子](https://zhuanlan.zhihu.com/p/381283590)
+
