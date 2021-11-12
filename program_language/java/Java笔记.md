@@ -198,6 +198,51 @@ REF
 
 
 
+### 1.5 泛型方法
+
+除了泛型类和泛型接口，泛型方法是java中使用泛型的第三种方式。不同于泛型类在实例化类的时候指明泛型具体类型，而是在调用方法的时候指明。
+
+> *泛型方法*是引入自己的类型参数的方法。
+>
+> 这类似于声明泛型类型，但类型参数的范围仅限于声明它的方法。
+>
+> 允许使用静态和非静态泛型方法，以及泛型类构造函数。
+>
+> 可以在泛型类和非泛型中的使用。
+
+```java
+// 定义将数组转换为列表的通用方法
+// 方法签名中 <T, G> 声明了泛型
+public static <T, G> List<G> fromArrayToList(T[] a, Function<T, G> mapperFunction) {
+    return Arrays.stream(a)
+      .map(mapperFunction)
+      .collect(Collectors.toList());
+}
+// 使用
+Integer[] intArray = {1, 2, 3, 4, 5};
+List<String> stringList = Generics.fromArrayToList(intArray, Object::toString);
+assertThat(stringList, hasItems("1", "2", "3", "4", "5"));
+// 指定获取map中的类型
+public <T> T getObjectParamOrDefault(String key, Object defaultValue) {
+  // params type is Map<String, Object>
+  Object obj = params.get(key);
+  if (obj == null) {
+    return (T) defaultValue;
+  }
+  return (T) obj;
+}
+String value = getObjectParamOrDefault("key", null);
+```
+
+
+
+REF
+
+- [generics/methods](https://docs.oracle.com/javase/tutorial/extra/generics/methods.html)
+- [The Basics of Java Generics](https://www.baeldung.com/java-generics)
+
+
+
 ## 2. 并发
 
 ### 2.1 线程池ThreadPoolExecutor
@@ -1041,4 +1086,73 @@ Java 微基准测试工具 (JMH，Java Microbenchmark Harness)，是一个 Java 
   - JVM一直在改进，对代码的微小改动，凭借最佳实践经验无法反应真实的情况，直接测试是写最好性能的代码的方式
 - [JMH-大厂是如何使用JMH进行Java代码性能测试的？必须掌握！](https://zhuanlan.zhihu.com/p/197257423)
 - [基准测试神器JMH——详解36个官方例子](https://zhuanlan.zhihu.com/p/381283590)
+
+
+
+
+
+## 6. Mockito
+
+Mockito 是一个java程序单元测试的mock框架，并宣称是最流行mock测试框架。
+
+Mockito可以创建 Mock 对象来进行测试，避免需要创建真实对象，尤其是一些服务类（数据库，缓存等）对象。
+
+基本使用：
+
+```
+repositories { mavenCentral() }
+dependencies { testImplementation "org.mockito:mockito-core:3.+" }
+```
+
+```xml
+<dependency>
+    <groupId>org.mockito</groupId>
+    <artifactId>mockito-core</artifactId>
+    <version>2.0.111-beta</version>
+</dependency>
+```
+
+
+
+主要功能：
+
+- `mock()` 创建mock对象，可以mock接口，和具体类
+  - `doReturn(obj).when(mock).someMethod(someArgs)` 指定特定参数，特定的返回值
+  - `anser()` 通用的行为
+- `spy()` 部分模拟，替换部分真实对象的返回结果
+-  `verify()` 检查mock对象的方法调用结果，例如调用次数
+
+```java
+import org.mockito.Mockito;
+// 创建mock对象
+Service cacheService = Mockito.mock(Service.class);
+// 配置对象行为, Service.getObject() 方法接受 “obj1” 参数时，返回 obj1, 其他参数将返回null/0/false等
+Mockito.doReturn(obj1).when(cacheService).getObject("obj1");
+
+// 通用的模拟, 当对象mock，执行 someMethod()方法， 并接受任意字符串参数，将执行answer()动作, 返回其结果
+Mockito.when(mock.someMethod(Mockito.anyString())).thenAnswer(
+     new Answer() {
+         public Object answer(InvocationOnMock invocation) {
+             Object[] args = invocation.getArguments();
+             Object mock = invocation.getMock();
+             return "called with arguments: " + Arrays.toString(args);
+         }
+ });
+
+//Following prints "called with arguments: [foo]"
+System.out.println(mock.someMethod("foo"));
+// 检查调用次数
+Mockito.verify(mock, Mockito.times(5)).someMethod("was called five times");
+```
+
+特别说明：
+
+-  即使Service的构造函数传递的类被混淆，依然可以mock出Service对象
+
+###  REF
+
+- [github: mockito](https://github.com/mockito/mockito)
+- [site:mockito](https://site.mockito.org/)
+- [doc: mockito](https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html)
+- [手把手教你 Mockito 的使用](https://segmentfault.com/a/1190000006746409)
 
