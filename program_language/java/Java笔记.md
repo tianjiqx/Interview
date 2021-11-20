@@ -1187,3 +1187,9 @@ Mockito.verify(mock, Mockito.times(5)).someMethod("was called five times");
 - [doc: mockito](https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html)
 - [手把手教你 Mockito 的使用](https://segmentfault.com/a/1190000006746409)
 
+
+
+## 扩展材料
+
+- [Effective Java笔记](https://github.com/keyvanakbary/learning-notes/blob/master/books/effective-java.md)
+
