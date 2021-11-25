@@ -243,6 +243,37 @@ REF
 
 
 
+
+
+### 1.6 正则表达式
+
+java正则表达式进行字符串匹配。用法
+
+```java
+Pattern pattern = Pattern.compile("regex");
+Matcher matcher = pattern.matcher("test string");
+if (matcher.matches()){
+  // match then do something
+  // 捕获组，commands 是组名称
+  String commands = matcher.group("commands").trim();
+}
+```
+
+
+
+- `\\s` 表示空格
+- `(?s)` 表示单行模式，字符串中的`\n` 也将被任意符号`.` 匹配到
+  - `(?m)` 表示多行模式
+  - `(?i)` 表示匹配时不区分大小写
+  - `(?x)`表达式中的空白字符将会被忽略，除非它已经被转义
+  - `(?:`  表示不捕获模式，只是用来分组
+- 捕获组 格式：` (?<名称>模式)`
+
+#### REF
+
+- [Java 正则表达式](https://www.runoob.com/java/java-regular-expressions.html)
+- [Java正则表达式实例教程](https://www.yiibai.com/java/java-regular-expression-tutorial.html)
+
 ## 2. 并发
 
 ### 2.1 线程池ThreadPoolExecutor
