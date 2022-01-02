@@ -1189,6 +1189,114 @@ Mockito.verify(mock, Mockito.times(5)).someMethod("was called five times");
 
 
 
+
+
+## 7. Java 公共库 
+
+### 7.1 Guava 
+
+Guava 是一组来自 Google 的核心 Java 库，其中包括新的集合类型（例如 multimap 和 multiset）、不可变集合、图形库以及用于并发、I/O、散列、缓存、原语、字符串等库。
+
+
+
+#### 常用库
+
+- 预先检查
+  - 实际java 11 也有类似 `requireNonNull(metric, "metric is null");`
+- 不可变集合
+- 字符串
+
+```java
+// 预先检查
+// 在一些构造函数或方法中使用
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkArgument;
+
+public static List<XX> newXXXList(List<XXX> list) {
+  checkNotNull(list, "list is null"); 
+  // 变种
+  checkArgument(i >= 0, "Argument was %s but expected nonnegative", i);
+}
+
+// 不可变集合(Map,list,set)
+public static final ImmutableSet<String> COLOR_NAMES = ImmutableSet.of(
+  "red",
+  "orange",
+  "yellow",
+  "green",
+  "blue",
+  "purple");
+
+ImmutableSet<Bar> bars = ImmutableSet.copyOf(bars);
+
+ImmutableSet<Bar> bars = ImmutableSet.<Bar>builder().
+  .add(new Bar("xx"))
+  .build();
+
+// Iterables 
+Iterable<Integer> concatenated = Iterables.concat(
+  Ints.asList(1, 2, 3),
+  Ints.asList(4, 5, 6));
+// concatenated has elements 1, 2, 3, 4, 5, 6
+String lastAdded = Iterables.getLast(myLinkedHashSet);
+
+// 函数式风格计算
+// list<CommonStats> 转换 Iterable<XXX> 
+Iterable<XXX> iter = Iterables.transform(stats, CommonStats::getXXX);
+ImmutableList<XXX> list = ImmutableList.copyOf(iter);
+
+// 可变集合
+Map<KeyType, LongishValueType> map = Maps.newLinkedHashMap();
+
+// ToString
+// Returns "ClassName{}"
+MoreObjects.toStringHelper(this)
+  .toString();
+
+// Returns "ClassName{x=1}"
+MoreObjects.toStringHelper(this)
+  .add("x", 1)
+  .toString();
+
+// Returns "ClassName{x=1}"
+MoreObjects.toStringHelper(this)
+  .omitNullValues()
+  .add("x", 1)
+  .add("y", null)  // 自动处理null值
+  .toString();
+```
+
+
+
+#### REF
+
+- [github: guava](https://github.com/google/guava)
+- [guava wiki](https://github.com/google/guava/wiki)
+- [Google Guava官方教程（中文版）](https://wizardforcel.gitbooks.io/guava-tutorial/content/1.html)
+- [guava-userguide-cn](https://www.bookstack.cn/read/guava-userguide-cn/README.md)
+
+
+
+### 7.2 AirLift
+
+AirLift 是一个用 Java 构建 REST 服务的框架。
+
+该项目用作 prestodb,  trino（原presto sql）等分布式系统的基础。
+
+功能模块：
+
+- slice 用于高效地处理堆和堆外内存
+- joni 字符串工具类，正则匹配
+- Units 时间，数据量等单位格式化显示
+
+
+
+#### REF
+
+- [github: airlift](https://github.com/airlift/airlift)
+
+
+
 ## 扩展材料
 
 - [Effective Java笔记](https://github.com/keyvanakbary/learning-notes/blob/master/books/effective-java.md)
