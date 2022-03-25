@@ -273,6 +273,10 @@ if (matcher.matches()){
 
 - [Java 正则表达式](https://www.runoob.com/java/java-regular-expressions.html)
 - [Java正则表达式实例教程](https://www.yiibai.com/java/java-regular-expression-tutorial.html)
+- [Java正则表达式——group方法详解](https://blog.csdn.net/u013514928/article/details/85473592)
+  - 捕获组是通过从左至右计算其开括号来编号
+  - group 0 表示匹配的字符串
+
 
 ## 2. 并发
 
@@ -967,6 +971,7 @@ REF
   - `jps -l` 输出主类的全名,jar包路径
   - `jps -m` 输出传递给主类main()函数的参数
   - `jps -q` 只输出pid
+  
 - jinfo：查看和调整虚拟机运行参数，环境变量，classpath等信息
   - `jinfo <pid>`
 
@@ -982,9 +987,31 @@ REF
 
 - jhat：分析jmap 打印的dump文件，可在浏览器中查看
   - `jhat <dumpfile>`
+  
 - jstat: 查看GC频率
-  - `jstat -gcutil <pid> [interval] [count]` 百分比显示，JVM堆使用情况
-
+  - `jstat -gcutil <pid> [interval] [count]` 百分比显示，JVM堆使用（Young,Old等区）情况
+  
+    - | 列   | 说明                                                       |
+      | ---- | ---------------------------------------------------------- |
+      | S0   | 第 0 个 survivor（幸存区）使用的百分比                     |
+      | S1   | 第 1 个 survivor（幸存区）使用的百分比                     |
+      | E    | `Eden` 区使用内存的百分比                                  |
+      | O    | 老生代内存使用的百分比                                     |
+      | P/M  | `PermGen`/`MetaSpace` 的内存使用百分比                     |
+      | YGC  | 程序启动以来 Young GC 发生的次数                           |
+      | YGCT | 程序启动以来 Young GC 共消耗的时间(s)                      |
+      | FGC  | 程序启动以来 Full GC 发生的次数                            |
+      | FGCT | 程序启动以来 Full GC 共消耗的时间(s)                       |
+      | CGC  | 程序启动以来 并发（Concurrent） GC 发生的次数，java11      |
+      | CGCT | 程序启动以来 并发（Concurrent） GC 共消耗的时间(s)，java11 |
+      | GCT  | 程序启动以来 GC 的总用时(s)                                |
+  
+    - `-gc` 按KB显示
+  
+  - `jstat -gccause <pid> [interval] [count]` 显示最后一次或当前正在发生的垃圾回收的诱因
+  
+  - `jstat -gcmetacapacity` 显示metaspace大小的统计信息
+  
 - arthas: trace,watch命令，分析性能，变量，查找抛出异常的位置
 
 
@@ -994,10 +1021,14 @@ GC日志打印，停顿时间
 扩展材料：
 
 - [调试排错 - Java问题排查：工具单](https://www.pdai.tech/md/java/jvm/java-jvm-debug-tools-list.html)  btrace, dmesg
+- [jstat命令总结](https://blog.csdn.net/u010648555/article/details/81089323)
+- [java11 jstat](https://docs.oracle.com/en/java/javase/11/tools/jstat.html#GUID-5F72A7F9-5D5A-4486-8201-E1D1BA8ACCB5)
 
 
 
 ### 4.2 JVM 参数
+
+#### 4.2.1 堆配置
 
 例子：-vmargs -Xms128M -Xmx512M -XX:PermSize=64M -XX:MaxPermSize=128M
 
@@ -1006,9 +1037,8 @@ GC日志打印，停顿时间
 - 堆内存
   - -Xms 128m JVM初始分配的堆内存
   - **-Xmx** 512m JVM最大允许分配的堆内存，按需分配
-
 - 新生代内存(Young Ceneration, YC) 
-  - 默认1310MB,最大无显著
+  - 默认1310MB,最大无限制
   - -XX:NewSize= \<young size>[unit] 
   - -XX:MaxNewSize= \<young size>[unit]
   - -Xmn \<young size>[unit] 
@@ -1025,28 +1055,57 @@ GC日志打印，停顿时间
     - 元空间，JVM方法区的新实现
       - 元空间的大小仅受本地内存限制
         - 风险：没有指定 Metaspace 的大小时，消耗系统所有内存
-      - 异常信息：:java.lang.OutOfMemoryError: Metaspace
+      - 异常信息：**:java.lang.OutOfMemoryError: Metaspace**
       - 替代原因：
         - 字符串存在永久代中，容易出现性能问题和内存溢出
         - 类及方法的信息等比较难确定其大小，因此对于永久代的大小指定比较困难
     - -XX:MetaspaceSize=N
     - -XX:MaxMetaspaceSize=N
+  - -XX:NewRatio=2   Old 和 Yong 的比例
 
 
 
-**GC**
+#### **4.2.1 GC 回收器**
 
-- 指定垃圾回收器  （TODO）
+- 指定垃圾回收器(分代的垃圾回收期)
   - -XX:+UseSerialGC  串行垃圾回收器
     - Serial + Serial Old 
   - -XX:+USeParNewGC 并发串行垃圾收集器， 多线程并发，减少回收时间
     - ParNew + Serial Old 
   - -XX:+UseParallelGC 并行收集器，多CPU物理并行，最大化的提高程序吞吐量，同时缩短程序停顿时间
     - ParallelScavenge  + Serial Old
+      - ParNew 的升级版本，主要区别在于提供了两个参数：-XX:MaxGCPauseMillis 最大垃圾回收停顿时间；-XX:GCTimeRatio 垃圾回收时间与总时间占比
   - -XX:+UseConcMarkSweepGC   CMS 回收器，基于“标记-清除”算法，以获取最短回收停顿时间为目标
     - ParNew + CMS + Serial Old，作为并发失败后备 Serial Old
+    - 并行清理过程中，其他线程依然工作不会造成Stop The world（STW），但是清理过程中可能产生新的垃圾对象
+    - 存在两次短暂的STW 进行Inital mark GC Root的直接对象和remark
   - -XX:+UseG1GC  G1垃圾收集器，多线程执行，既用于新生代收集，也用于老生代收集
-- 指定GC日志（TODO more）
+    - 分治思想，大小相等的region 存放各种大小的对象（Eden、Survivor 、Old、Humongous角色）
+      - Garbage-First 有限回收region中对象少的region
+    - -XX:MaxGCPauseMillis 参数可指定预期停顿值
+      - 根据历史数据预测本地满足预期STW时间，需要回收的region数量
+    - 与 CMS 相比，G1 有内存整理过程（标记-压缩），避免了内存碎片；STW 时间可控（能预测 GC 停顿时间）
+    - STW：初始标记，再标记，清理，复制（主要）
+  - -XX:+UnlockExperimentalVMOptions -XX:+UseZGC ZGC在G1基础上的优化
+    - 同样是region，但还是不分代
+    - Colored Pointer，64 bit，读屏障位进行并发转移，避免STW
+    - 设计
+      - STW时间不超过10ms
+      - STW时间不会随着堆的大小，或者活跃对象的大小而增加
+
+- -XX:+PrintCompressedOopsMode 指针压缩模式（jdk7，8 默认开启）
+
+  - 压缩模式即使用每隔8个字节保存一个引用，32 bit 指针可以应用35位（32G）的空间，通常 jvm 堆空间大小配置成31g
+  - oop (ordinary object pointer) 普通对象指针
+
+- -XX:ConcGCThreads：并发回收垃圾的线程数。
+
+  - 默认是总核数的12.5%，8核CPU默认是1
+
+- -XX:ParallelGCThreads：STW阶段使用线程数，默认是总核数的60%。
+
+- 指定GC日志
+
   - ```
     -XX:+PrintGC  // 别名 -verbose:gc
     -XX:+PrintGCDetails
@@ -1061,6 +1120,10 @@ GC日志打印，停顿时间
 
 GC调优经验： Full GC 的成本远高于 Minor GC，尽量将新对象预留在新生代，大对象/长期存活的对象进老年代
 
+#### 4.2.3 其他
+
+- -XX:ReservedCodeCacheSize=256m -XX:InitialCodeCacheSize=256m CodeCache的大小，JIT编译的代码
+
 
 
 #### REF
@@ -1070,6 +1133,41 @@ GC调优经验： Full GC 的成本远高于 Minor GC，尽量将新对象预留
 - [java8添加并查看GC日志(ParNew+CMS)](https://segmentfault.com/a/1190000021453229)
 - [JVM GC 日志详解](https://juejin.cn/post/6844903791909666823)
 - [java9 gc log参数迁移](https://www.jianshu.com/p/a99dec3230c9)
+- [Java中9种常见的CMS GC问题分析与解决-美团](https://tech.meituan.com/2020/11/12/java-9-cms-gc.html)
+  - GC cuase主要原因
+    - **System.gc()：** 手动触发GC操作
+    - CMS：  Initial Mark + Final Remark
+    - **Promotion Failure：** Old 区没有足够的空间分配给 Young 区晋升的对象
+    - **Concurrent Mode Failure：** CMS GC 运行期间，Old 区预留的空间不足以分配给新的对象
+
+  - **GC问题排查**（原因还是现象？）
+    - 时序分析，先发生的事件往往是根因，CPU 负载高 -> 慢查询增多（数据过多，移动到old区，回收代价增加） -> GC 耗时增大 -> 线程Block增多 -> RT 上涨
+    - 概率分析，历史原因概率，慢查询增多 -> GC 耗时增大 -> CPU 负载高 -> 线程 Block 增多 -> RT上涨
+    - 实验分析，尝试问题复现，触发条件，线程Block增多 -> CPU 负载高 -> 慢查询增多 -> GC 耗时增大 -> RT 上涨
+    - 反证分析，表象的发不发生跟结果是否有相关性，例如集群的角度观察到某些节点慢查和 CPU 都正常，但也出了问题，那么问题可能是：GC 耗时增大 -> 线程 Block 增多 -> RT 上涨
+      - 原因
+
+- [新一代垃圾回收器ZGC的探索与实践-美团](https://tech.meituan.com/2020/08/06/new-zgc-practice-in-meituan.html) java11
+- [浅析JAVA的垃圾回收机制](https://www.jianshu.com/p/5261a62e4d29) java8
+- [一文看懂 JVM 内存布局及 GC 原理-infoq](https://www.infoq.cn/article/3wyretkqrhivtw4frmr3)
+  - YG: eden ->  S0 <-> S1
+  - OG: full GC
+- [【博客大赛】JVM深入探索之初探ZGC的领域](https://blog.51cto.com/alex4dream/2738057)
+- [ZGC的开发者博客 zgc-jdk17](https://malloc.se/blog/zgc-jdk17) 
+  - jdk17新增特性 ZGC Pauses 的GarbageCollectorMXBean获取真实STW时间和次数
+    - -XX:+UseDynamicNumberOfGCThreads  动态gc线程数enable
+    - 支持macOS/AArch64
+
+  - jdk16  max STW <1ms
+    - 平均 0.05 ms (50μs) 最大约0.5ms (500us)
+
+  - jdk15 生产级ZGC、支持堆分配在NVRAM上，支持OOPS
+  - Jdk14 开始支持macos，支持JFR leak profiler
+  - jdk11 支持zgc
+
+- [JVM Tuning with G1 GC](https://marknienaber.medium.com/jvm-tuning-with-g1-gc-76f27535f054)
+- [Java Hotspot G1 GC的一些关键技术](https://tech.meituan.com/2016/09/23/g1.html)
+
 
 
 
@@ -1096,6 +1194,8 @@ Java 微基准测试工具 (JMH，Java Microbenchmark Harness)，是一个 Java 
 对于大型项目，将基准放在单独的子项目中，依赖于待测试模块。
 
 源码jmh-samples 目录下提供了一些编写的基准测试的样例。
+
+presto demo:[RegexpFunctionsBenchmark.java](https://github.com/prestodb/presto/blob/master/presto-main/src/test/java/com/facebook/presto/operator/scalar/RegexpFunctionsBenchmark.java)
 
 
 
