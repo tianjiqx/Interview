@@ -369,11 +369,111 @@ select {
 
 ## 3. 标准库
 
+### 3.1 Strings
+
+go 中使用 [utf-8 编码](https://github.com/tianjiqx/notes/blob/master/distributed_system/%E5%BA%8F%E5%88%97%E5%8C%96%E4%B8%8E%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96SerDe.md)存储字符串字面量（literal）, 通过 Slice 直接使用index 是操作字节的位置。
+
+```go
+s := "abcdefghijklmnop" 
+//cdefghi
+fmt.Println(s[2:9])  
+
+s = "维基百科:关于中文维基百科" 
+// 百科:关于中文
+fmt.Println(string([]rune(s)[2:9])) 
+
+/*
+U+65E5 '日' starts at byte position 0
+U+672C '本' starts at byte position 3
+U+8A9E '語' starts at byte position 6
+*/
+const nihongo = "日本語"
+for index, runeValue := range nihongo {
+  fmt.Printf("%#U starts at byte position %d\n", runeValue, index)
+}
+
+
+	// These names of these constants are chosen to give nice alignment in the
+	// table below. The first nibble is an index into acceptRanges or F for
+	// special one-byte cases. The second nibble is the Rune length or the
+	// Status for the special one-byte case.
+	xx = 0xF1 // invalid: size 1
+	as = 0xF0 // ASCII: size 1
+	s1 = 0x02 // accept 0, size 2
+	s2 = 0x13 // accept 1, size 3
+	s3 = 0x03 // accept 0, size 3
+	s4 = 0x23 // accept 2, size 3
+	s5 = 0x34 // accept 3, size 4
+	s6 = 0x04 // accept 0, size 4
+	s7 = 0x44 // accept 4, size 4
+
+
+// uft-8 库
+// RuneStart reports whether the byte could be the first byte of an encoded,
+// possibly invalid rune. Second and subsequent bytes always have the top two
+// bits set to 10.
+// 0xC0 => 1100 0000
+func RuneStart(b byte) bool { return b&0xC0 != 0x80 }
+// DecodeRune unpacks the first UTF-8 encoding in p and returns the rune and
+// its width in bytes. If p is empty it returns (RuneError, 0). Otherwise, if
+// the encoding is invalid, it returns (RuneError, 1). Both are impossible
+// results for correct, non-empty UTF-8.
+//
+// An encoding is invalid if it is incorrect UTF-8, encodes a rune that is
+// out of range, or is not the shortest possible UTF-8 encoding for the
+// value. No other validation is performed.
+func DecodeRune(p []byte) (r rune, size int) {
+	n := len(p)
+	if n < 1 {
+		return RuneError, 0
+	}
+	p0 := p[0]
+	x := first[p0]
+	if x >= as {
+		// The following code simulates an additional check for x == xx and
+		// handling the ASCII and invalid cases accordingly. This mask-and-or
+		// approach prevents an additional branch.
+		mask := rune(x) << 31 >> 31 // Create 0x0000 or 0xFFFF.
+		return rune(p[0])&^mask | RuneError&mask, 1
+	}
+	sz := int(x & 7)
+	accept := acceptRanges[x>>4]
+	if n < sz {
+		return RuneError, 1
+	}
+	b1 := p[1]
+	if b1 < accept.lo || accept.hi < b1 {
+		return RuneError, 1
+	}
+	if sz <= 2 { // <= instead of == to help the compiler eliminate some bounds checks
+		return rune(p0&mask2)<<6 | rune(b1&maskx), 2
+	}
+	b2 := p[2]
+	if b2 < locb || hicb < b2 {
+		return RuneError, 1
+	}
+	if sz <= 3 {
+		return rune(p0&mask3)<<12 | rune(b1&maskx)<<6 | rune(b2&maskx), 3
+	}
+	b3 := p[3]
+	if b3 < locb || hicb < b3 {
+		return RuneError, 1
+	}
+	return rune(p0&mask4)<<18 | rune(b1&maskx)<<12 | rune(b2&maskx)<<6 | rune(b3&maskx), 4
+}
+```
+
+Runne： 即unicode的“Code point” 表示utf-8单个字符，int32。
 
 
 
 
 
+#### REF
+
+- [Strings, bytes, runes and characters in Go](https://go.dev/blog/strings)
+- [utf8string](https://pkg.go.dev/golang.org/x/exp/utf8string) 包 utf8string 提供了一种按字符而不是按字节索引字符串的有效方法。
+- [utf8](https://go.dev/pkg/unicode/utf8/) 包 utf8 实现函数和常量以支持以 UTF-8 编码的文本。它包括在符文和 UTF-8 字节序列之间进行转换的函数。
 
 
 
