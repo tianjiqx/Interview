@@ -1397,6 +1397,48 @@ AirLift 是一个用 Java 构建 REST 服务的框架。
 
 
 
+## 7.3 Netty
+
+```
+//  池化，非池化内存
+io.netty.allocator.type=pooled
+io.netty.allocator.type=unpooled
+
+// 默认false，默认堆外内存， 由反射调用使用 noCleaner策略
+// 设置为 true 后，默认使用堆内内存，DirectByteBuffer 堆外内存使用Cleaner策略
+io.netty.noUnsafe=false
+
+// 默认的堆外内存方式切换到堆内, 默认值false
+io.netty.noPreferDirect = true
+
+// 限制Netty中hasCleaner策略的DirectByteBuffer堆外内存的大小
+-XX:MaxDirectMemorySize
+// 限制noCleaner策略下Netty的DirectByteBuffer分配的最大堆外内存的大小，如果该值为0，则使用hasCleaner策略
+-Dio.netty.maxDirectMemory
+
+// 观察堆外内存使用
+-XX:NativeMemoryTracking=detail
+jcmd pid VM.native_memory detail
+
+
+// top 的 RES 实际进程使用内存大小，包括堆外内存
+```
+
+
+
+### REF
+
+- [Netty 核心原理剖析与 RPC 实践-完](https://learn.lianglianglee.com/专栏/Netty 核心原理剖析与 RPC 实践-完)
+- [Netty的内存使用方法与原理——池化与堆外内存的开启与关闭](https://www.jianshu.com/p/05f99a85b977)
+- [Netty堆外内存泄漏排查，这一篇全讲清楚了](https://segmentfault.com/a/1190000021469481) Netty noCleaner策略
+- [Netty堆外内存泄露排查盛宴](https://tech.meituan.com/2018/10/18/netty-direct-memory-screening.html)
+- [Netty防止内存泄漏措施](https://mp.weixin.qq.com/s/IusIvjrth_bzvodhOMfMPQ)
+- [疑案追踪：Spring Boot内存泄露排查记](https://mp.weixin.qq.com/s/aYwIH0TN3nSzNaMR2FN0AA)
+
+
+
+
+
 ## 扩展材料
 
 - [Effective Java笔记](https://github.com/keyvanakbary/learning-notes/blob/master/books/effective-java.md)
