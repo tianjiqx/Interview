@@ -321,6 +321,8 @@ void preOrder(TreeNode* root) {
 	}
 }
 // 中序
+// 如何理解栈方式， 在中间节点，左节点 与 右节点划条线，斜切处理是一个重复结构
+// 处理 左节点和中间节点，通过stack 先进后出。 
 void midVisitAllLeft(TreeNode* root, stack<TreeNode*> & stack) {
 	while (root != NULL) {
 		// root节点入栈，
