@@ -504,3 +504,15 @@ using namespace std;
 - [c++11 多线程（3）atomic 总结](https://www.jianshu.com/p/8c1bb012d5f8)
 - [聊聊C++异步编程-1](https://zhuanlan.zhihu.com/p/77999255)
 
+
+- tutorial [from](https://blog.bcmeng.com/post/database-learning.html)
+
+	- https://www.learncpp.com/ 比较系统，通俗易懂，适合入门时系统学习，也可以在忘记某个细节时查一查
+	- A Tour of C++ ★★★★★ 如果有其他编码语言基础，建议直接阅读此书入门 C++
+	-  Build your own Database 介绍了数据库开发需要的 C++ 知识点，里面的知识点搞懂后，就可以开始用 C++ 开发数据库了
+	- https://isocpp.org/faq ★★★★★ 对某个 C++ 细节点搞不清楚时，可以进行参考
+	- Programming Notes for Professionals books Stack Overflow C++ 问题高频，经典问题的系统整理，在对某个 C++ 细节点搞不清楚时，可以进行参考
+	- CppCoreGuidelines C++ 编程规范和最佳实践，有空了可以系统过一遍，不过每个细节不用都记住，IDE 有提供对应的插件，可以在你编码时进行提醒
+	- CppCon 历年会议 PPT ★★★★★ 有很多关于 C++ 设计，语法，工具，性能优化，数据结构的精彩分享， 感觉自己 C++ 入门后，可以每天抽空看一个小分享
+	- Effective C++ 系列：Effective 系列有4本书，自己时间充裕的话，可以阅读全书，时间紧张的话建议直接阅读网上大家整理好的笔记
+

@@ -1013,8 +1013,9 @@ REF
   - `jstat -gcmetacapacity` 显示metaspace大小的统计信息
   
 - arthas: trace,watch命令，分析性能，变量，查找抛出异常的位置
+  - `watch <class name> <method name> -x 2 `
 
-
+- jar tvf xxx.jar 查看jar中包含的类 
 
 GC日志打印，停顿时间
 
@@ -1435,6 +1436,21 @@ jcmd pid VM.native_memory detail
 - [Netty防止内存泄漏措施](https://mp.weixin.qq.com/s/IusIvjrth_bzvodhOMfMPQ)
 - [疑案追踪：Spring Boot内存泄露排查记](https://mp.weixin.qq.com/s/aYwIH0TN3nSzNaMR2FN0AA)
 
+
+
+## Java Stream
+
+```java
+// list -> stream -> array
+String[] arr = list.stream().toArray(String[] ::new);
+
+// [] -> list
+Arrays.asList(arr);
+
+// replace null -> 0.0
+values.replaceAll(value -> Objects.requireNonNullElse(value, 0.0));
+
+```
 
 
 
