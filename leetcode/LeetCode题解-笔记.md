@@ -1520,6 +1520,52 @@ public boolean isSymmetricHelper(TreeNode left, TreeNode right) {
 }
 ```
 
+```java
+// 105. 从前序与中序遍历序列构造二叉树
+// 给定两个整数数组 preorder 和 inorder ，其中 preorder 是二叉树的先序遍历， inorder 是同一棵树的中序遍历，请构造二叉树并返回其根节点。
+
+// [ 根节点, [左子树的前序遍历结果], [右子树的前序遍历结果] ]
+// [ [左子树的中序遍历结果], 根节点, [右子树的中序遍历结果] ]
+
+// 优化: 哈希表 val:pos 
+
+public TreeNode buildTree(int[] preorder, int[] inorder) {
+    int n = preorder.length;
+    var indexMap = new HashMap<Integer, Integer>();
+    for (int i =0; i<n; i++) {
+        indexMap.put(inorder[i], i);
+    }
+    return build(indexMap, preorder, inorder, 0, n-1, 0, n-1);
+}
+public TreeNode build(Map<Integer, Integer>indexMap, int[] preorder, int[] inorder, int preorderLeft,
+    int preorderRight, int inorderLeft, int inorderRight) {
+    if (preorderLeft > preorderRight) {
+        return null;
+    }
+    // root
+    int preorderRoot = preorderLeft;
+    int inorderRoot = indexMap.get(preorder[preorderRoot]);
+
+    TreeNode root = new TreeNode(preorder[preorderRoot]);
+
+    // left
+    int leftTreeSize = inorderRoot - inorderLeft;
+    TreeNode leftRoot = build(indexMap, preorder, inorder, 
+    preorderLeft+1, preorderLeft+leftTreeSize, 
+    inorderLeft, inorderLeft + leftTreeSize);
+    root.left = leftRoot;
+
+    // right
+    TreeNode right = build(indexMap, preorder, inorder,
+    preorderLeft + leftTreeSize + 1, preorderRight, 
+    inorderRoot+1, inorderRight);
+    root.right = right;
+    return root;
+    }
+
+```
+
+
 #### 二叉树初始化，遍历
 
 ```java
