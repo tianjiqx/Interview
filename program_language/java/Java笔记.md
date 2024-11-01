@@ -949,7 +949,7 @@ long result = completableFuture.get();
 - Web Serverlet
 - Netty
 
-
+- [guava ListenableFutureExplained](https://github.com/google/guava/wiki/ListenableFutureExplained)
 
 REF
 
@@ -1170,6 +1170,8 @@ GC调优经验： Full GC 的成本远高于 Minor GC，尽量将新对象预留
 - [Java Hotspot G1 GC的一些关键技术](https://tech.meituan.com/2016/09/23/g1.html)
 
 
+- hprof 文件堆栈内存分析工具 [Memory Analyzer (MAT)](https://eclipse.dev/mat/) 
+
 
 
 ## 5. JMH
@@ -1287,7 +1289,7 @@ Mockito.verify(mock, Mockito.times(5)).someMethod("was called five times");
 - [site:mockito](https://site.mockito.org/)
 - [doc: mockito](https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html)
 - [手把手教你 Mockito 的使用](https://segmentfault.com/a/1190000006746409)
-
+- [中文翻译](https://github.com/hehonghui/mockito-doc-zh)
 
 
 
@@ -1452,6 +1454,18 @@ values.replaceAll(value -> Objects.requireNonNullElse(value, 0.0));
 
 ```
 
+### 日期时间解析
+
+```
+FixedDateFormat
+
+ISO_OFFSET_DATE_TIME
+
+2024-10-25T20:52:51+08:00
+yyyy-MM-dd'T'HH:mm:ss
+
+
+```
 
 
 

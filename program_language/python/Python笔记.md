@@ -223,6 +223,18 @@ glibc（GNU C库）是一个C语言库，提供了许多与操作系统交互的
  - [awesome-nlp](https://github.com/keon/awesome-nlp#python)
 
 
+### 3.5 Flask
+
+python web 应用框架。
+[flash doc](https://dormousehole.readthedocs.io/en/latest/)
+
+
+### 3.6 FastAPI
+
+FastAPI 是一个用于构建 API 的现代、快速（高性能）的 web 框架，使用 Python 3.8+ 并基于标准的 Python 类型提示。
+
+[教程 - 用户指南](https://fastapi.tiangolo.com/zh/tutorial/)
+
 ## REF
 
 - [Python 文档目录](https://docs.python.org/zh-cn/3/contents.html)
