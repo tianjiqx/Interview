@@ -14,10 +14,9 @@ Java笔记
 
 缺点：
 
-- 性能瓶颈
+- 性能瓶颈，反射涉及了动态类型的解析，JVM 无法对这些代码进行优化
 
   
-
 （argodbbar client 与master通信，rpc框架）
 
 其他参考：笔记[UML与设计模式-笔记.md](https://github.com/tianjiqx/notes/blob/master/software_project/UML/UML%E4%B8%8E%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%AC%94%E8%AE%B0.md) 介绍了远程代理
@@ -30,6 +29,14 @@ Java笔记
   - 远程对象，智能引用，多线程访问的同步代理，隐藏复杂功能，写时复制等
   - 保护代理，保护对象特定属性
     - 不同的调用处理器InvocationHandler，所能做事情不同
+
+
+反射应用：
+- 通过反射来创建实例
+  - 使用Class对象的newInstance()方法来创建Class对象对应类的实例
+  - 先通过Class对象获取指定的Constructor对象，再调用Constructor对象的newInstance()方法来创建实例
+- 获取类的全部信息
+- 调用任意方法
 
 
 
@@ -1172,6 +1179,8 @@ GC调优经验： Full GC 的成本远高于 Minor GC，尽量将新对象预留
 
 - hprof 文件堆栈内存分析工具 [Memory Analyzer (MAT)](https://eclipse.dev/mat/) 
 
+  - 配置java -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -jar your-application.jar,默认 java_pid<pid>.hprof
+
 
 
 ## 5. JMH
@@ -1468,6 +1477,18 @@ yyyy-MM-dd'T'HH:mm:ss
 ```
 
 
+## 8. Vector API
+
+java JIT C2 支持自动向量化已经很久，在jdk21之后，也开始支持类C语言的Vector API。 
+
+Vector API 相比 自动向量化，对SIMD更加可控，简单的计算和求和自动向量化表现很好，但是对于存在 if 分支判断的情况，很可能退出向量化。Vector API 可以强制要求用户避免在for循环中写if判断。
+使用自动向量化，需要将if 外提，冗余代码。
+
+
+### REF
+- [Java’s new Vector API: How fast is it? — Part 1](https://medium.com/@tomerr90/javas-new-vector-api-how-fast-is-it-part-1-1b4c2b573610)
+
+- [Java’s new Vector API: How fast is it? — Part 2](https://medium.com/@tomerr90/javas-new-vector-api-how-fast-is-it-part-2-2fc22e344e5)
 
 ## 扩展材料
 

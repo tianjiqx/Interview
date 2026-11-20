@@ -168,6 +168,9 @@ tar -xzf kt_python_env_liunx_x86_64.tar.gz -C kt_python_env
 # 5.退出虚拟环境
 conda deactivate
 
+# 6. 删除环境
+conda remove -n <env_name> --all
+
 ```
 - ubuntu20 venv 方式提供的离线python包，不支持kylinos v10。但支持ubuntu 16。
 - ubuntu20 conda pack 出包支持运行在kylinos v10 环境，centos 7。

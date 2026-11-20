@@ -7,8 +7,45 @@ Long
 Double
 
 
-数组 .length 
-集合 .size()
+数组 .length, get(i), set(i, x)
+集合 .size(), get(i), add(x), remove(i)
+
+字符串 .length(), charAt(), indexOf(), substring(), toLowerCase(), toUpperCase(), trim(), replace(), split()
+
+.startsWith(), endsWith(), equals(), compareTo(), contains(),
+
+```
+
+## Basic 
+
+```
+# 遍历 数组
+int[] arr1;
+for (int num : arr1) {
+    # 数字转字符串
+    String s = String.valueOf(num);
+}
+
+
+```
+
+
+## Set
+```java
+
+Set<Integer> set = new HashSet<Integer>();
+
+set.add(1);
+
+set.remove(1);
+
+set.contains(1);
+
+set.size();
+
+set.clear();
+
+set.isEmpty();
 
 ```
 
@@ -156,8 +193,9 @@ public void dfs(TreeNode root) {
         dfs(root.right);
     }
 }
-
+# p,q 节点 的最近祖先
 public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+    // 记录所有parent节点
     dfs(root);
     while (p != null) {
         visited.add(p.val);
