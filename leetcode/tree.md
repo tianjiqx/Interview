@@ -3,6 +3,7 @@
 
 #### 二叉树最大深度、对称二叉树
 
+
 ```java
 /**
 给定一个二叉树，找出其最大深度。
@@ -123,8 +124,12 @@ public boolean isSymmetricHelper(TreeNode left, TreeNode right) {
 }
 ```
 
+
+
+### 105. 从前序与中序遍历序列构造二叉树
+
 ```java
-// 105. 从前序与中序遍历序列构造二叉树
+
 // 给定两个整数数组 preorder 和 inorder ，其中 preorder 是二叉树的先序遍历， inorder 是同一棵树的中序遍历，请构造二叉树并返回其根节点。
 
 // [ 根节点, [左子树的前序遍历结果], [右子树的前序遍历结果] ]
@@ -355,11 +360,11 @@ while(root != null || (!stack.isEmpty())) {
 ```
 
 
-
+### leetcode 99. 恢复二叉搜索树
 
 ```java
 
-/* leetcode 99. 恢复二叉搜索树
+/* 
 给你二叉搜索树的根节点 root ，该树中的 恰好 两个节点的值被错误地交换。请在不改变其结构的情况下，恢复这棵树 。
 */
 
@@ -426,16 +431,12 @@ class Solution {
 }
 ```
 
+### leetcode 235. 二叉搜索树的最近公共祖先
 
-```java
-
-/*
-leetcode 235. 二叉搜索树的最近公共祖先
 给定一个二叉搜索树, 找到该树中两个指定节点的最近公共祖先。
 百度百科中最近公共祖先的定义为：“对于有根树 T 的两个结点 p、q，最近公共祖先表示为一个结点 x，满足 x 是 p、q 的祖先且 x 的深度尽可能大（一个节点也可以是它自己的祖先）。”
-*/
 
-
+```java
 /*
 对于当前节点 root：
 1. 如果 p.val 和 q.val 都小于 root.val，说明两个节点都在左子树，继续向左查找。
@@ -458,17 +459,19 @@ public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
     }
     return null;
 }
+```
 
-/*
-leeeeetcode 236. 二叉树的最近公共祖先
+### leeeeetcode 236. 二叉树的最近公共祖先
+
+
 给定一个二叉树, 找到该树中两个指定节点的最近公共祖先。
 
 方法:
 - 递归后序遍历：左右子树分别搜索，通过递归返回值找到 LCA。（单次查询）
 - DFS + HashMap 记录父节点 + HashSet：先建立父节点索引，再沿祖先链查找交点。 （多次查询）
 
-*/
 
+```
 public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
     // 递归终止条件
     if (root == null || root == p || root == q) {
@@ -539,87 +542,15 @@ public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
 
 ```
 
-```java
 
-/*
-99. 恢复二叉搜索树
-给你二叉搜索树的根节点 root ，该树中的 恰好 两个节点的值被错误地交换。请在不改变其结构的情况下，恢复这棵树 。
-*/
+### leetcode 114. 二叉树展开为链表
 
-class Solution {
-    /*
-
-        设原本递增序列中的两个数是 a < b，交换后：
-        原来：... a, 中间的数, b ...
-        现在：... b, 中间的数, a ...
-
-        不相邻：
-        a < 中间的数 < b
-        ... b, 第一个中间数, ..., 最后一个中间数, a ...
-        └──────────┘        └───────────────┘
-        一定下降               一定下降
-
-
-        其他相邻位置仍保持递增。因此：
-        - 第一次下降的左边，一定是错误的大值 b。
-        - 最后一次下降的右边，一定是错误的小值 a。
-
-        如果它们相邻，则只有：
-        ... b, a ...
-    */
-
-    private TreeNode prev;
-    private TreeNode first;
-    private TreeNode second;
-
-    public void recoverTree(TreeNode root) {
-        prev = null;
-        first = null;
-        second = null;
-
-        inorder(root);
-
-        if (first != null && second != null) {
-            int temp = first.val;
-            first.val = second.val;
-            second.val = temp;
-        }
-    }
-
-
-
-    private void inorder(TreeNode node) {
-        if (node == null) {
-            return;
-        }
-
-        inorder(node.left);
-
-        // 按中序顺序访问当前节点
-        if (prev != null && prev.val > node.val) {
-            if (first == null) {
-                first = prev;
-            }
-            second = node;
-        }
-        prev = node;
-
-        inorder(node.right);
-    }
-}
-
-```
-
-
-```java                             
-
-/*
-leetcode 114. 二叉树展开为链表
 给你二叉树的根结点 root ，请你将它展开为一个单链表：
 展开后的单链表应该同样使用 TreeNode ，其中 right 子指针指向链表中下一个结点，而左子指针始终为 null 。
 展开后的单链表应该与二叉树 先序遍历 顺序相同。
 
-
+```java                             
+/*
 解法一：递归 + 前驱节点
 使用反向先序遍历：右 → 左 → 根。
 维护一个 prev，表示已经处理好的链表头节点。

@@ -22,7 +22,7 @@
 
 示例：有序数组中寻找两数之和
 
-例如 LeetCode 167「两数之和 II」。
+### LeetCode 167「两数之和 II」
 
 给你一个下标从 1 开始的整数数组 numbers ，该数组已按 非递减顺序排列。
 
@@ -64,6 +64,85 @@ public int[] twoSum(int[] numbers, int target) {
 - 每次移动都要能够证明：被排除的候选不可能成为答案。
 
 适用题型：有序数组搜索、回文判断、三数之和、容器面积等。
+
+### LeetCode 11. 盛最多水的容器
+
+给定一个长度为 n 的整数数组 height 。有 n 条垂线，第 i 条线的两个端点是 (i, 0) 和 (i, height[i]) 。
+
+找出其中的两条线，使得它们与 x 轴共同构成的容器可以容纳最多的水。
+
+返回容器可以储存的最大水量。
+
+说明：你不能倾斜容器。
+
+```                                                             
+/*
+定义：
+- left = 0：左边界。
+- right = height.length - 1：右边界。
+- maxArea：记录最大面积。
+
+// 双指针（左右夹逼）+ 贪心算法
+// 为什么必须移动较短的柱子? 证明不会错过最大面积的解
+
+时间复杂度 O(n)
+*/
+
+class Solution {
+    public int maxArea(int[] height) {
+        int left = 0;
+        int right = height.length - 1;
+        int maxArea = 0;
+
+        while (left < right) {
+            // 1. 计算当前容器面积
+            int width = right - left;
+            int h = Math.min(height[left], height[right]);
+            int area = width * h;
+
+            // 2. 更新最大面积
+            maxArea = Math.max(maxArea, area);
+
+            // 3. 移动较短的一边
+            if (height[left] < height[right]) {
+                left++;
+            } else {
+                right--;
+            }
+        }
+
+        return maxArea;
+    }
+}
+
+```
+
+### leetcode 15. 三数之和
+给你一个整数数组 nums ，判断是否存在三元组 [nums[i], nums[j], nums[k]] 满足 i != j、i != k 且 j != k ，同时还满足 nums[i] + nums[j] + nums[k] == 0 。请你返回所有和为 0 且不重复的三元组。
+
+注意：答案中不可以包含重复的三元组。
+
+示例 1：
+
+输入：nums = [-1,0,1,2,-1,-4]
+输出：[[-1,-1,2],[-1,0,1]]
+解释：
+nums[0] + nums[1] + nums[2] = (-1) + 0 + 1 = 0 。
+nums[1] + nums[2] + nums[4] = 0 + 1 + (-1) = 0 。
+nums[0] + nums[3] + nums[4] = (-1) + 2 + (-1) = 0 。
+不同的三元组是 [-1,0,1] 和 [-1,-1,2] 。
+注意，输出的顺序和三元组的顺序并不重要。
+示例 2：
+
+输入：nums = [0,1,1]
+输出：[]
+解释：唯一可能的三元组和不为 0 。
+示例 3：
+
+输入：nums = [0,0,0]
+输出：[[0,0,0]]
+解释：唯一可能的三元组和为 0 。
+
 
 ## 三、快慢指针
 
@@ -161,16 +240,35 @@ return false;
 
 例如 LeetCode 209「长度最小的子数组」，数组元素均为正整数。
 
+给定一个含有 n 个正整数的数组和一个正整数 target 。
+
+找出该数组中满足其总和大于等于 target 的长度最小的 子数组 [numsl, numsl+1, ..., numsr-1, numsr] ，并返回其长度。如果不存在符合条件的子数组，返回 0 。
+
+
 ```
+/*
+维护一个窗口 [left, right]，以及窗口内元素的总和 sum。
+1. 右指针 right 向右移动，将新元素加入窗口，使 sum 增大。
+2. 当 sum >= target 时，说明当前窗口满足条件，可以尝试移动 left 来缩小窗口。
+3. 每次窗口满足条件时，更新最小长度。
+4. 重复以上过程，直到遍历完整个数组。
+关键技巧：
+右指针负责寻找满足条件的窗口，左指针负责压缩窗口，寻找更优解。
+*/
+
 public int minSubArrayLen(int target, int[] nums) {
     int left = 0, sum = 0;
     int ans = Integer.MAX_VALUE;
 
     for (int right = 0; right < nums.length; right++) {
+        // 1. 扩大窗口
         sum += nums[right];
 
+        // 2. 窗口满足条件，尝试收缩
         while (sum >= target) {
+            // 更新最短长度
             ans = Math.min(ans, right - left + 1);
+            // 收缩左边界
             sum -= nums[left];
             left++;
         }
@@ -195,8 +293,24 @@ public int minSubArrayLen(int target, int[] nums) {
 两个指针沿同一个方向遍历，但职责不同。
 
 典型题目：LeetCode 283「移动零」。
+给定一个数组 nums，编写一个函数将所有 0 移动到数组的末尾，同时保持非零元素的相对顺序。
+
+请注意 ，必须在不复制数组的情况下原地对数组进行操作。
+
+示例 1:
+
+输入: nums = [0,1,0,3,12]
+输出: [1,3,12,0,0]
+示例 2:
+
+输入: nums = [0]
+输出: [0]
 
 ```
+/*
+slow： 慢指针，指向已处理的非零元素区域末尾。
+fast： 快指针，指向待处理的元素。
+*/
 public void moveZeroes(int[] nums) {
     int slow = 0;
 
@@ -222,14 +336,16 @@ public void moveZeroes(int[] nums) {
 ## 六、分离链表指针
 
 例如 LeetCode 19「删除链表的倒数第 N 个结点」。
+给你一个链表，删除链表的倒数第 n 个结点，并且返回链表的头结点。
 
 核心技巧是让两个指针保持固定的距离。
 
 ```
+// 创建一个虚拟头结点, 处理删掉头结点情况
 ListNode dummy = new ListNode(0, head);
 ListNode fast = dummy, slow = dummy;
 
-// fast 先走 n + 1 步
+// fast 先走 n + 1 步, 最后fast 走到 末尾时，slow.next 就是 待删除节点
 for (int i = 0; i <= n; i++) {
     fast = fast.next;
 }

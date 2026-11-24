@@ -313,12 +313,11 @@ nums2: [ ... , maxLeft2 ] | [ minRight2, ... ]
 3.  **为什么偶数要平均？** 因为左右两边数量相等，中位数处于两个部分的交界处。
 
 
-```java
-/*
-leetecode 35 搜索插入位置
+### leetecode 35 搜索插入位置
 
 给定一个排序数组和一个目标值，在数组中找到目标值，并返回其索引。如果目标值不存在于数组中，返回它将会被按顺序插入的位置。
-*/
+
+```java
 
 // 二分查找
 public int searchInsert(int[] nums, int target) {
@@ -339,10 +338,10 @@ public int searchInsert(int[] nums, int target) {
     return l;
 
     }
+```
 
 
-/*
-leetcode 69 x的平方根
+### leetcode 69 x的平方根
 给你一个非负整数 x ，计算并返回 x 的 算术平方根 。
 
 由于返回类型是整数，结果只保留 整数部分 ，小数部分将被 舍去 。
@@ -352,7 +351,7 @@ leetcode 69 x的平方根
 解法：
 二分查找的下界为 0，上界可以粗略地设定为 x。在二分查找的每一步中，我们只需要比较中间元素 mid 的平方与 x 的大小关系，并通过比较的结果调整上下界的范围。
 
-*/
+```java
 
 public int mySqrt(int x) {
     // 防止int溢出
@@ -372,20 +371,17 @@ public int mySqrt(int x) {
     // 一定有 left > right，且 right * right <= x < left * left
     return (int)h;
 }
+```
 
-
-
-/*
-leetcode 74. 搜索二维矩阵
+### leetcode 74. 搜索二维矩阵
 
 给你一个满足下述两条属性的 m x n 整数矩阵：
 
 每行中的整数从左到右按非严格递增顺序排列。
 每行的第一个整数大于前一行的最后一个整数。
 给你一个整数 target ，如果 target 在矩阵中，返回 true ；否则，返回 false 。
-*/
 
-
+```java
 public boolean searchMatrix(int[][] matrix, int target) {
     // 2 次 2分查找 
     // 第一次 查找所在行， 第一个大于 target 的行，在上一行中查找
@@ -440,8 +436,8 @@ public boolean searchMatrix(int[][] matrix, int target) {
 
 
 
-/*
-leetcode 162. 寻找峰值
+
+### leetcode 162. 寻找峰值
 
 峰值元素是指其值严格大于左右相邻值的元素。
 
@@ -454,8 +450,7 @@ leetcode 162. 寻找峰值
 思路：
 沿着上坡方向寻找，一定能够到达某个峰值。
 
-*/
-
+```java
 public int findPeakElement(int[] nums) {
     int l = 0, h = nums.length - 1;
 
@@ -475,11 +470,11 @@ public int findPeakElement(int[] nums) {
     // 最后 l == h
     return l;
 }
+```
 
 
 
-/*
-leetcode 287. 寻找重复数
+### leetcode 287. 寻找重复数
 给定一个包含 n + 1 个整数的数组 nums ，其数字都在 [1, n] 范围内（包括 1 和 n），可知至少存在一个重复的整数。
 
 假设 nums 只有 一个重复的整数 ，返回 这个重复的数 。
@@ -500,8 +495,8 @@ leetcode 287. 寻找重复数
 因为每个数组值都在 [1, n]，从索引 0 出发不断跳转，最终一定进入一个环。
 重复数字就是这个环的入口。
 
-*/
 
+```java
 public int findDuplicate(int[] nums) {
     int l = 1, h = nums.length - 1;
 
